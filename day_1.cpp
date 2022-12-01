@@ -29,7 +29,7 @@ void aoc::day_1() {
     auto max_calories_1_elf = sorted_calories.front();
     auto max_calories_3_elves = r::accumulate( sorted_calories | rv::take(3), 0);
 
-    std::cout << header(1);
+    std::cout << header(1, "Calory Counting");
     std::cout << "  part 1: " << max_calories_1_elf << "\n";
     std::cout << "  part 2: " << max_calories_3_elves << "\n";
 }

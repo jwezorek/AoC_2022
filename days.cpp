@@ -3,6 +3,8 @@
 #include <sstream>
 #include <filesystem>
 
+/*------------------------------------------------------------------------------------------------*/
+
 namespace fs = std::filesystem;
 
 namespace {
@@ -18,10 +20,10 @@ std::string aoc::input_path(int day, int part) {
     return inp_path.string();
 }
 
-constexpr auto k_columns = 40;
+constexpr auto k_columns = 60;
 
-std::string aoc::header(int day) {
-    auto label = std::string("Advent of Code 2022 -- Day ") + std::to_string(day);
+std::string aoc::header(int day, const std::string& title) {
+    auto label = std::string("AoC 2022 -- Day ") + std::to_string(day) + ": " + title;
     int num_stars = (k_columns - label.size())/2;
     auto left_marg = std::string(num_stars-1, ' ');
     auto right_marg = std::string(k_columns - num_stars - label.size() - 1, ' ');
