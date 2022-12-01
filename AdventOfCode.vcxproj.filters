@@ -7,25 +7,30 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="src\day_1.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="day_1.cpp">
+    <ClCompile Include="src\days.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="util.cpp">
+    <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="days.cpp">
+    <ClCompile Include="src\util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="days.h">
+    <ClInclude Include="src\days.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="util.h">
+    <ClInclude Include="src\util.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\README.md">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
