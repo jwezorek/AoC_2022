@@ -8,4 +8,5 @@ namespace aoc {
     std::string header(int day, const std::string& title);
 
     void day_1();
+    void day_2();
 }

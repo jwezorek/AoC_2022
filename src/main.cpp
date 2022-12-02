@@ -5,6 +5,6 @@
 
 int main()
 {
-    aoc::day_1();
+    aoc::day_2();
 }
 
