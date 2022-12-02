@@ -16,34 +16,18 @@ namespace rv = ranges::views;
 namespace {
     namespace rps {
         enum class shape : int {
-            rock = 0,
-            paper = 1,
-            scissors = 2
+            rock = 0, paper = 1, scissors = 2
         }; 
 
         enum class outcome : int {
-            loss = 0,
-            draw = 1,
-            win = 2
+            loss = 0, draw = 1, win = 2
         };
-    }
-
-    int score_per_shape(rps::shape shape) {
-        return static_cast<int>(shape) + 1;
-    }
-
-    int score_per_outcome(rps::outcome outcome) {
-        return 3 * static_cast<int>(outcome);
     }
 
     rps::shape letter_to_shape(char letter) {
         const static std::unordered_map<char, rps::shape> map_letter_to_shape = {
-            {'A', rps::shape::rock},
-            {'B', rps::shape::paper},
-            {'C', rps::shape::scissors},
-            {'X', rps::shape::rock},
-            {'Y', rps::shape::paper},
-            {'Z', rps::shape::scissors}
+            {'A', rps::shape::rock}, {'B', rps::shape::paper}, {'C', rps::shape::scissors},
+            {'X', rps::shape::rock}, {'Y', rps::shape::paper}, {'Z', rps::shape::scissors}
         };
         return map_letter_to_shape.at(letter);
     }
@@ -59,7 +43,8 @@ namespace {
 
     int score_match(rps::shape p1, rps::shape p2) {
         auto outcome = player1_vs_player2_outcome(p1, p2);
-        return score_per_shape(p1) + score_per_outcome(outcome);
+        // (score for player 1's shape + 1) + 3 * (score for outcome);
+        return (static_cast<int>(p1)+1) + 3*static_cast<int>(outcome);
     }
 
     std::tuple<rps::shape, rps::shape> parse_input_line_1(const std::string& inp_line) {
@@ -71,9 +56,7 @@ namespace {
     // part 2...
     rps::outcome letter_to_outcome(char letter) {
         const static std::unordered_map<char, rps::outcome> map_letter_to_outcome = {
-            {'X', rps::outcome::loss},
-            {'Y', rps::outcome::draw},
-            {'Z', rps::outcome::win}
+            {'X', rps::outcome::loss}, {'Y', rps::outcome::draw}, {'Z', rps::outcome::win}
         };
         return map_letter_to_outcome.at(letter);
     }
