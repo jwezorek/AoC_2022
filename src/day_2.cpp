@@ -78,10 +78,10 @@ namespace {
         return map_letter_to_outcome.at(letter);
     }
 
-    std::tuple<rps::shape, rps::outcome> parse_input_line_2(const std::string& inp_line) {
+    std::tuple<rps::outcome, rps::shape> parse_input_line_2(const std::string& inp_line) {
         auto p2_char = inp_line[0];
         auto outcome_char = inp_line[2];
-        return { letter_to_shape(p2_char), letter_to_outcome(outcome_char) };
+        return { letter_to_outcome(outcome_char), letter_to_shape(p2_char) };
     }
 
     rps::shape shape_to_yield_outcome(rps::shape player_2, rps::outcome desired_outcome) {
@@ -111,7 +111,7 @@ void aoc::day_2() {
         input |
             rv::transform(
                 [](const auto& inp_line)->int {
-                    auto [p2_shape, desired_outcome] = parse_input_line_2(inp_line);
+                    auto [desired_outcome, p2_shape] = parse_input_line_2(inp_line);
                     auto p1_shape = shape_to_yield_outcome(p2_shape, desired_outcome);
                     return score_match(p1_shape, p2_shape);
                 }
