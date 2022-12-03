@@ -9,4 +9,5 @@ namespace aoc {
 
     void day_1();
     void day_2();
+    void day_3();
 }
