@@ -50,14 +50,14 @@ namespace {
             ) | r::to_vector;
         auto seeds = rng[0];
         for (char seed : seeds) {
-            bool appears_in_all_rucksacks = true;
+            bool appears_in_all_sets = true;
             for (const auto& letter_set : letter_sets) {
                 if (letter_set.find(seed) == letter_set.end()) {
-                    appears_in_all_rucksacks = false;
+                    appears_in_all_sets = false;
                     break;
                 }
             }
-            if (appears_in_all_rucksacks) {
+            if (appears_in_all_sets) {
                 return seed;
             }
         }
