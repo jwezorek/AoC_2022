@@ -41,8 +41,7 @@ namespace {
     }
 
     // part 2 ...
-    template<typename RNG>
-    char shared_letter(RNG rng) {
+    char shared_letter(auto rng) {
         auto letter_sets = rng |
             rv::transform(
                 [](const std::string& inp_line) {
