@@ -10,8 +10,8 @@ namespace rv = ranges::views;
 
 /*------------------------------------------------------------------------------------------------*/
 
-void aoc::day_1() {
-    auto input = file_to_string_vector( input_path(1,1) );
+void aoc::day_1(int day, const std::string& title) {
+    auto input = file_to_string_vector( input_path(day,1) );
     auto sorted_calories =
         input | 
         rv::chunk_by([](auto lhs, auto rhs) {return is_number(lhs) && is_number(rhs); }) |
@@ -29,7 +29,7 @@ void aoc::day_1() {
     auto max_calories_1_elf = sorted_calories.front();
     auto max_calories_3_elves = r::accumulate( sorted_calories | rv::take(3), 0);
 
-    std::cout << header(1, "Calory Counting");
+    std::cout << header(day, title);
     std::cout << "  part 1: " << max_calories_1_elf << "\n";
     std::cout << "  part 2: " << max_calories_3_elves << "\n";
 }

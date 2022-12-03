@@ -20,12 +20,11 @@ namespace {
     char shared_item_letter(const std::string& input_line) {
         auto [rucksack_1,rucksack_2] = split_string_in_half(input_line);
         auto items_in_rucksack_1 = rucksack_1 | r::to<std::unordered_set<char>>();
-        auto shared_item = r::find_if(rucksack_2,
+        return *r::find_if(rucksack_2,
             [&items_in_rucksack_1](auto rucksack_2_item) {
                 return items_in_rucksack_1.find(rucksack_2_item) != items_in_rucksack_1.end();
             }
         );
-        return *shared_item;
     }
 
     int priority_from_letter(char item) {
@@ -40,8 +39,7 @@ namespace {
                     return inp_line | r::to<std::unordered_set<char>>();
                 }
             ) | r::to_vector;
-        auto seeds = rng[0];
-        for (char seed : seeds) {
+        for (char seed : rng[0]) {
             bool appears_in_all_sets = true;
             for (const auto& letter_set : letter_sets) {
                 if (letter_set.find(seed) == letter_set.end()) {
@@ -56,7 +54,7 @@ namespace {
     }
 }
 
-void aoc::day_3() {
+void aoc::day_3(int day, const std::string& title) {
     auto input = file_to_string_vector(input_path(3, 1));
     auto part_1 = r::accumulate(
         input | rv::transform(
@@ -78,7 +76,7 @@ void aoc::day_3() {
         0
     );
 
-    std::cout << header(3, "Rucksack Reorganization");
+    std::cout << header(day, title);
     std::cout << "  part 1: " << part_1 << "\n";
     std::cout << "  part 2: " << part_2 << "\n";
 }

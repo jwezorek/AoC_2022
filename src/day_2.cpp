@@ -77,7 +77,7 @@ namespace {
     }
 }
 
-void aoc::day_2() {
+void aoc::day_2(int day, const std::string& title) {
     auto input = file_to_string_vector(input_path(2, 1));
     auto total_score_part1 = r::accumulate(
         input |
@@ -102,7 +102,7 @@ void aoc::day_2() {
         0
     );
 
-    std::cout << header(2, "Rock Paper Scissors");
+    std::cout << header(day, title);
     std::cout << "  part 1: " << total_score_part1 << "\n";
     std::cout << "  part 2: " << total_score_part2 << "\n";
 }
