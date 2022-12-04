@@ -17,12 +17,13 @@ namespace {
         int to;
     };
 
-    bool is_contained_by(const interval& container, const interval& containee) {
-        return containee.from >= container.from && containee.to <= container.to;
-    }
-
     bool is_in_interval(const interval& intv, int v) {
         return v >= intv.from && v <= intv.to;
+    }
+
+    bool is_contained_by(const interval& container, const interval& containee) {
+        return is_in_interval(container, containee.from) &&
+            is_in_interval(container, containee.to);
     }
 
     bool overlaps(const interval& lhs, const interval& rhs) {
