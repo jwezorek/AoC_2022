@@ -13,6 +13,7 @@ namespace {
             []() {aoc::day_1(1, "Calory Counting"); },
             []() {aoc::day_2(2, "Rock Paper Scissors"); },
             []() {aoc::day_3(3, "Rucksack Reorganization"); },
+            []() {aoc::day_4(4, "Camp Cleanup"); }
         };
         auto index = day - 1;
         if (index < 0) {
@@ -42,7 +43,7 @@ int main(int argc, char* argv[]) {
     }
     auto day_number = std::stoi(day);
     if (day_number < 1 || day_number > 25) {
-        std::cout << "invalid day: " << day << "\n";
+        std::cout << "invalid day: " << day_number << "\n";
         return -1;
     }
 
