@@ -59,7 +59,7 @@ namespace {
                             [](auto ch) {
                                 return !std::isdigit(ch) && ch != ' ';
                             }
-                    ) | r::to<std::string>();
+                        ) | r::to<std::string>();
                     auto pieces = aoc::split(strip_nonnumeric, ' ');
                     pieces = pieces |
                         rv::remove_if([](const std::string& piece) {return piece.empty(); }) |
