@@ -14,7 +14,8 @@ namespace {
             []() {aoc::day_2(2, "Rock Paper Scissors"); },
             []() {aoc::day_3(3, "Rucksack Reorganization"); },
             []() {aoc::day_4(4, "Camp Cleanup"); },
-            []() {aoc::day_5(5, "Supply Stacks"); }
+            []() {aoc::day_5(5, "Supply Stacks"); },
+            []() {aoc::day_6(6, "Tuning Trouble"); }
         };
         auto index = day - 1;
         if (index < 0) {

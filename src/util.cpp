@@ -34,3 +34,11 @@ std::vector<std::string> aoc::split(const std::string& s, char delim) {
     }
     return elems;
 }
+
+
+std::string aoc::file_to_string(const std::string& filename) {
+    std::ifstream file(filename);
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    return buffer.str();
+}
