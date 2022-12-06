@@ -26,7 +26,7 @@ namespace {
     }
 
     int first_appearance_of_n_unique_letters(const std::string& input, int n) {
-        auto pair = r::find_if(
+        auto tuples = r::find_if(
             rv::enumerate(input) | rv::sliding(n),
             []( auto rng_of_tups)->bool {
                 return are_unique_letters(
@@ -34,7 +34,7 @@ namespace {
                 );
              }
         );
-        auto [index, last_letter] = (*pair)[n-1];
+        auto [index, last_letter] = (*tuples)[n-1];
         return index + 1;
     }
 }
