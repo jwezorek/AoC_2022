@@ -159,7 +159,7 @@ namespace {
     constexpr auto total_disk_space = 70000000;
     constexpr auto space_required = 30000000;
 
-    int size_of_smallest_file_to_delete(dir_ptr root) {
+    int size_of_directory_to_delete(dir_ptr root) {
         auto unused_space = total_disk_space - root->size;
         auto space_needed_to_free_up = space_required - unused_space;
         std::vector<int> large_enough_dir_sizes;
@@ -181,12 +181,10 @@ namespace {
 
 void aoc::day_7(int day, const std::string& title) {
     auto input = file_to_string_vector(input_path(7, 1));
-    auto commands = input |
-        rv::transform([](const std::string& line) {return parse_line(line); });
-
+    auto commands = input | rv::transform(parse_line);
     auto root_dir = construct_file_system(commands);
-    
+
     std::cout << header(day, title);
     std::cout << "   part 1: " << size_of_directories_at_most_100000(root_dir) << "\n";
-    std::cout << "   part 2: " << size_of_smallest_file_to_delete(root_dir) << "\n";
+    std::cout << "   part 2: " << size_of_directory_to_delete(root_dir) << "\n";
 }
