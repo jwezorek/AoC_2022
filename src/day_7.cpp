@@ -167,7 +167,7 @@ namespace {
         std::function<void(dir_ptr)> find_large_enough_dirs;
         find_large_enough_dirs = [&](dir_ptr p) {
             for (auto child : child_directories(p)) {
-                if (child->size > space_needed_to_free_up) {
+                if (child->size >= space_needed_to_free_up) {
                     large_enough_dir_sizes.push_back(child->size);
                     find_large_enough_dirs(child);
                 }
