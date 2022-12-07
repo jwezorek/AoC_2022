@@ -29,15 +29,6 @@ namespace {
     using dir_ptr = std::shared_ptr<directory>;
     using command = std::function<dir_ptr(const dir_ptr& current_dir)>;
     using command_parser = std::function<command(const std::string& line)>;
-
-    command parse_create_root_dir(const std::string& line) {
-        if (line == "$ cd /") {
-            return [](const dir_ptr& current_dir)->dir_ptr {
-                return std::make_shared<directory>();
-            };
-        }
-        return {};
-    }
  
     command parse_ls_command(const std::string& line) {
         if (line == "$ ls") {
@@ -75,34 +66,33 @@ namespace {
         return {};
     }
         
-    command parse_cd_to_parent(const std::string& line) {
-        if (line == "$ cd ..") {
-            return [](const dir_ptr& current_dir)->dir_ptr {
-                return current_dir->parent.lock();
-            };
-        } 
-        return {};
-    }
-    
-    command parse_cd_to_child(const std::string& line) {
+    command parse_cd(const std::string& line) {
         auto pieces = aoc::split(line, ' ');
-        if (pieces.size() == 3 && pieces[0] == "$" && 
-                pieces[1] == "cd" && pieces[2] != "..") {
-            return [dir_name = pieces[2]](const dir_ptr& current_dir)->dir_ptr {
-                return current_dir->directories[dir_name];
-            };
+        if (pieces.size() == 3 && pieces[0] == "$" &&  pieces[1] == "cd") {
+            auto dir_name = pieces[2];
+            if (dir_name == "/") {
+                return [](const dir_ptr& current_dir)->dir_ptr {
+                    return std::make_shared<directory>();
+                };
+            } else if (dir_name == "..") {
+                return [](const dir_ptr& current_dir)->dir_ptr {
+                    return current_dir->parent.lock();
+                };
+            } else  {
+                return [dir_name](const dir_ptr& current_dir)->dir_ptr {
+                    return current_dir->directories[dir_name];
+                };
+            }
         }
         return {};
     }
 
     command parse_line(const std::string& line) {
         const static std::vector<command_parser> parsers = {
-            parse_create_root_dir,
             parse_ls_command,
             parse_create_directory,
             parse_create_file,
-            parse_cd_to_parent,
-            parse_cd_to_child
+            parse_cd
         };
         for (const auto& parser : parsers) {
             auto cmd = parser(line);
