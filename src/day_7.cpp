@@ -17,7 +17,6 @@ namespace rv = ranges::views;
 namespace {
 
     struct directory {
-        std::unordered_map<std::string, int> files;
         std::unordered_map<std::string, std::shared_ptr<directory>> directories;
         std::weak_ptr<directory> parent;
         int size;
@@ -54,12 +53,12 @@ namespace {
         return {};
     }
 
-    command parse_create_file(const std::string& line) {
+    command parse_file_size(const std::string& line) {
         auto pieces = aoc::split(line, ' ');
         if (pieces.size() == 2 && aoc::is_number(pieces[0])) {
             int sz = std::stoi(pieces[0]);
-            return [fname = pieces[1], sz](const dir_ptr& current_dir)->dir_ptr {
-                current_dir->files[fname] = sz;
+            return [sz](const dir_ptr& current_dir)->dir_ptr {
+                current_dir->size += sz;
                 return {};
             };
         }
@@ -91,7 +90,7 @@ namespace {
         const static std::vector<command_parser> parsers = {
             parse_ls_command,
             parse_create_directory,
-            parse_create_file,
+            parse_file_size,
             parse_cd
         };
         for (const auto& parser : parsers) {
@@ -111,15 +110,11 @@ namespace {
         for (auto child : child_directories(root)) {
             populate_directory_sizes(child);
         }
-        auto size_of_files = r::accumulate(
-            root->files | rv::transform([](auto pair) {return pair.second; }), 
-            0
-        );
         auto size_of_directories = r::accumulate(
             child_directories(root) | rv::transform([](auto child) {return child->size; }),
             0
         );
-        root->size = size_of_files + size_of_directories;
+        root->size += size_of_directories;
     }
 
     dir_ptr construct_file_system(auto commands) {
