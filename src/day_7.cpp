@@ -28,17 +28,6 @@ namespace {
     using dir_ptr = std::shared_ptr<directory>;
     using command = std::function<dir_ptr(const dir_ptr& current_dir)>;
     using command_parser = std::function<command(const std::string& line)>;
- 
-    command parse_ls_command(const std::string& line) {
-        if (line == "$ ls") {
-            return [](const dir_ptr& current_dir)->dir_ptr {
-                // noop ... we'll just treat the listed files
-                // and directories as separate commands
-                return {};
-            };
-        } 
-        return {};
-    }
 
     command parse_create_directory(const std::string& line) {
         auto pieces = aoc::split(line, ' ');
@@ -88,7 +77,6 @@ namespace {
 
     command parse_line(const std::string& line) {
         const static std::vector<command_parser> parsers = {
-            parse_ls_command,
             parse_create_directory,
             parse_file_size,
             parse_cd
@@ -99,7 +87,7 @@ namespace {
                 return cmd;
             }
         }
-        throw std::runtime_error("unknown command: " + line);
+        return [](const dir_ptr& current_dir)->dir_ptr {return {}; };
     }
 
     auto child_directories(dir_ptr dir) {
