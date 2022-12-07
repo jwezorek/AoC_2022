@@ -1,13 +1,11 @@
 #include "util.h"
 #include "days.h"
 #include <range/v3/all.hpp>
-#include <vector>
-#include <string>
+#include <array>
 #include <unordered_map>
 #include <iostream>
 #include <memory>
 #include <functional>
-#include <stdexcept>
 
 namespace r = ranges;
 namespace rv = ranges::views;
@@ -76,7 +74,7 @@ namespace {
     }
 
     command parse_line(const std::string& line) {
-        const static std::vector<command_parser> parsers = {
+        const static std::array<command_parser,3> parsers = {
             parse_create_directory,
             parse_file_size,
             parse_cd
