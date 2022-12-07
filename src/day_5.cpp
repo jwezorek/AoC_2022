@@ -23,7 +23,7 @@ namespace {
     };
 
     std::vector<char> column_to_stack(const std::vector<std::string>& inp, int col) {
-        int n = inp.size();
+        auto n = static_cast<int>(inp.size());
         return rv::iota(0, n) |
             rv::transform(
                 [&inp, col](int row)->char {
@@ -39,7 +39,7 @@ namespace {
     stacks parse_stacks(std::span<const std::string> inp) {
         auto input = inp | rv::take(inp.size() - 1) | r::to_vector | r::actions::reverse;
 
-        int n = (input.front().size() + 1) / 4;
+        int n = (static_cast<int>(input.front().size()) + 1) / 4;
         return rv::iota(0, n) |
             rv::transform(
                 [&input](int i) {

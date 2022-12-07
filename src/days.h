@@ -13,4 +13,5 @@ namespace aoc {
     void day_4(int day, const std::string& title);
     void day_5(int day, const std::string& title);
     void day_6(int day, const std::string& title);
+    void day_7(int day, const std::string& title);
 }
