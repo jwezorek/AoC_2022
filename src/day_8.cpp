@@ -101,6 +101,10 @@ namespace{
         return row >= 0 && row < rows&& col >= 0 && col < columns;
     }
 
+    auto running_max(auto rng) {
+        return rv::partial_sum(rng, [](int lhs, int rhs) { return std::max(lhs, rhs); });
+    }
+
     auto line(const grid& ary, int c, int r, int col_offset, int row_offset) {
         return rv::iota(0) |
             rv::transform(
@@ -123,40 +127,60 @@ namespace{
                 );
     }
 
-    std::vector<grid_loc> visible_from_front(auto rng) {
-        int max_height = -1;
-        std::vector<grid_loc> visi;
-        for (auto loc : rng) {
-            if (loc.value > max_height) {
-                visi.push_back(loc);
-                max_height = loc.value;
-            }
-        }
-        return visi;
+    auto visible_from_front(auto rng) {
+        return rv::zip(
+                rv::concat(rv::single(-1), running_max(rng | rv::transform([](auto&& loc) {return loc.value; }))),
+                rng
+            ) | 
+            rv::remove_if(
+                [](auto&& tup) {
+                    auto [max, loc] = tup;
+                    return loc.value <= max;
+                }
+            ) |
+            rv::transform(
+                [](auto&& tup) {
+                    const auto& [max, loc] = tup;
+                    return loc;
+                }
+            );
+    }
+
+    auto visible(auto rng) {
+        return rv::concat(
+            visible_from_front(rng),
+            visible_from_front(rv::reverse(rng))
+        );
     }
 
     int num_visible(const grid& ary) {
         grid_loc_set visible_set;
-        for (auto row : columns(ary)) {
-            for (auto loc : visible_from_front(row)) {
-                visible_set.insert(loc);
-            }
-            for (auto loc : visible_from_front(rv::reverse(row))) {
+        for (auto col : columns(ary)) {
+            for (auto loc : visible(col)) {
                 visible_set.insert(loc);
             }
         }
-
-        for (auto col : rows(ary)) {
-            for (auto loc : visible_from_front(col)) {
-                visible_set.insert(loc);
-            }
-            for (auto loc : visible_from_front(rv::reverse(col))) {
+        for (auto row : rows(ary)) {
+            for (auto loc : visible(row)) {
                 visible_set.insert(loc);
             }
         }
-
         return static_cast<int>(visible_set.size());
     }
+
+    /*
+    int num_visible(const grid& ary) {
+        auto visi_cols = columns(ary) | rv::transform([](auto rng) {return visible(rng); });
+        
+         | rv::transform(
+            [](auto&& rng) {
+                return visible(rng);
+            }
+        ) | rv::join | r::to< grid_loc_set>();
+       
+        return 0;
+    }
+    */
 
     int viewing_distance(const grid& ary, int col, int row, int col_offset, int row_offset) {
         int max_height = ary[row][col];
@@ -182,7 +206,9 @@ namespace{
                 rv::transform(
                     [&ary,col,row](auto&& tup) {
                         auto [col_offset, row_offset] = tup;
-                        return viewing_distance(ary, col, row, col_offset, row_offset);
+                        auto vd = viewing_distance(ary, col, row, col_offset, row_offset);
+                        //std::cout << vd << "\n";
+                        return vd;
                     }
                 ),
             1,
@@ -204,6 +230,16 @@ namespace{
 
 void aoc::day_8(int day, const std::string& title) {
     auto input_strings = file_to_string_vector(input_path(day, 1));
+    
+    /*
+    auto input_strings = std::vector<std::string>{
+        "30373",
+        "25512",
+        "65332",
+        "33549",
+        "35390"
+    };
+    */
     auto input = strings_to_2D_array_of_digits(input_strings);
 
     std::cout << header(day, title);
