@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 
 /*------------------------------------------------------------------------------------------------*/
 
@@ -35,10 +36,25 @@ std::vector<std::string> aoc::split(const std::string& s, char delim) {
     return elems;
 }
 
-
 std::string aoc::file_to_string(const std::string& filename) {
     std::ifstream file(filename);
     std::stringstream buffer;
     buffer << file.rdbuf();
     return buffer.str();
+}
+
+std::vector<std::vector<int>> aoc::strings_to_2D_array_of_digits(const std::vector<std::string>& lines) {
+    std::vector<std::vector<int>> grid(lines.size());
+    std::transform(lines.begin(), lines.end(), grid.begin(),
+        [](const std::string& line)->std::vector<int> {
+            std::vector<int> row(line.size());
+            std::transform(line.begin(), line.end(), row.begin(),
+                [](char c)->int {
+                    return c - '0';
+                }
+            );
+            return row;
+        }
+    );
+    return grid;
 }

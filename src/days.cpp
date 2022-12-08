@@ -24,7 +24,7 @@ constexpr auto k_columns = 60;
 
 std::string aoc::header(int day, const std::string& title) {
     auto label = std::string("AoC 2022 -- Day ") + std::to_string(day) + ": " + title;
-    int num_stars = (k_columns - label.size())/2;
+    int num_stars = (k_columns - static_cast<int>(label.size()))/2;
     auto left_marg = std::string(num_stars-1, ' ');
     auto right_marg = std::string(k_columns - num_stars - label.size() - 1, ' ');
     std::stringstream ss;
