@@ -23,6 +23,10 @@ namespace {
     struct point {
         int x;
         int y;
+
+        bool operator==(const point& p) const {
+            return x == p.x && y == p.y;
+        }
     };
 
     point operator+(const point& lhs, const point& rhs) {
@@ -33,7 +37,7 @@ namespace {
         return  { lhs.x - rhs.x, lhs.y - rhs.y };
     }
 
-    struct hash_point {
+    struct point_hasher {
         size_t operator()(const point& pt) const {
             size_t seed = 0;
             boost::hash_combine(seed, pt.x);
@@ -42,26 +46,17 @@ namespace {
         }
     };
 
-    struct point_equal {
-        bool operator()(const point& p1, const point& p2) const {
-            return p1.x == p2.x && p1.y == p2.y;
-        }
-    };
-
-    using point_set = std::unordered_set<point, hash_point, point_equal>;
+    using point_set = std::unordered_set<point, point_hasher>;
 
     template <typename T> int sgn(T val) {
         return (T(0) < val) - (val < T(0));
     }
 
     point normalize(const point& pt) {
-        return {
-            sgn(pt.x),
-            sgn(pt.y)
-        };
+        return { sgn(pt.x), sgn(pt.y) };
     }
 
-    int max_delta(const point& pt) {
+    int max_manhattan_delta(const point& pt) {
         return std::max(std::abs(pt.x), std::abs(pt.y));
     }
 
@@ -80,20 +75,17 @@ namespace {
 
     point move_link(const point& prev, const point& link) {
         auto link_delta = prev - link;
-        if (max_delta(link_delta) <= 1) {
-            return link;
-        }
-        return link + normalize(link_delta);
+        return (max_manhattan_delta(link_delta) <= 1) ? 
+            link :
+            link + normalize(link_delta);
     }
 
     rope move_rope(const rope& r, direction dir) {
         rope new_rope(r.size());
         for (int i = 0; i < r.size(); ++i) {
-            if (i == 0) {
-                new_rope[0] = move_head(r[0], dir);
-            } else {
-                new_rope[i] = move_link(new_rope[i - 1], r[i]);
-            }
+            new_rope[i] = (i > 0) ?
+                move_link(new_rope[i - 1], r[i]):
+                move_head(r[0], dir);
         }
         return new_rope;
     }
