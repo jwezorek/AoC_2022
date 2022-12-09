@@ -16,10 +16,6 @@ namespace rv = ranges::views;
 /*------------------------------------------------------------------------------------------------*/
 
 namespace {
-    enum class direction {
-        up = 0, right = 1, down = 2, left = 3
-    };
-
     struct point {
         int x;
         int y;
@@ -61,14 +57,11 @@ namespace {
     }
 
     using rope = std::vector<point>;
-    using movement = std::tuple<direction, int>;
+    using movement = std::tuple<char, int>;
 
-    point move_head(const point& head, direction dir) {
-        const static std::unordered_map<direction, point> dir_to_delta = {
-            {direction::up, {0,1}},
-            {direction::right, {1,0}},
-            {direction::down, {0,-1}},
-            {direction::left, {-1,0}}
+    point move_head(const point& head, char dir) {
+        const static std::unordered_map<char, point> dir_to_delta = {
+            {'U', {0,1}}, {'R', {1,0}}, {'D', {0,-1}}, {'L', {-1,0}}
         };
         return head + dir_to_delta.at(dir);
     }
@@ -80,28 +73,19 @@ namespace {
             link + normalize(link_delta);
     }
 
-    rope move_rope(const rope& r, direction dir) {
+    rope move_rope(const rope& r, char direction) {
         rope new_rope(r.size());
         for (int i = 0; i < r.size(); ++i) {
             new_rope[i] = (i > 0) ?
                 move_link(new_rope[i - 1], r[i]):
-                move_head(r[0], dir);
+                move_head(r[0], direction);
         }
         return new_rope;
     }
 
     movement parse_line_of_input(const std::string& line) {
-        const static std::unordered_map<char, direction> letter_to_direction = {
-            {'U', direction::up},
-            {'R', direction::right},
-            {'D', direction::down},
-            {'L', direction::left}
-        };
         auto pieces = aoc::split(line, ' ');
-        return {
-            letter_to_direction.at(pieces[0][0]),
-            std::stoi(pieces[1])
-        };
+        return {pieces[0][0], std::stoi(pieces[1])};
     }
 
     int unique_tail_positions(const auto& moves, int length_of_rope) {
