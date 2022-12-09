@@ -48,14 +48,6 @@ namespace {
         return (T(0) < val) - (val < T(0));
     }
 
-    point normalize(const point& pt) {
-        return { sgn(pt.x), sgn(pt.y) };
-    }
-
-    int max_manhattan_delta(const point& pt) {
-        return std::max(std::abs(pt.x), std::abs(pt.y));
-    }
-
     using rope = std::vector<point>;
     using movement = std::tuple<char, int>;
 
@@ -67,10 +59,10 @@ namespace {
     }
 
     point move_link(const point& prev, const point& link) {
-        auto link_delta = prev - link;
-        return (max_manhattan_delta(link_delta) <= 1) ? 
+        auto delta = prev - link;
+        return (std::max(std::abs(delta.x), std::abs(delta.y)) <= 1) ?
             link :
-            link + normalize(link_delta);
+            link + point{ sgn(delta.x), sgn(delta.y) };
     }
 
     rope move_rope(const rope& r, char direction) {
