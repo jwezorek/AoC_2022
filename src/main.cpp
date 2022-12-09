@@ -17,7 +17,8 @@ namespace {
             []() {aoc::day_5(5, "Supply Stacks"); },
             []() {aoc::day_6(6, "Tuning Trouble"); },
             []() {aoc::day_7(7, "No Space Left On Device"); },
-            []() {aoc::day_8(8, "Treetop Tree House"); }
+            []() {aoc::day_8(8, "Treetop Tree House"); },
+            []() {aoc::day_9(9, "Rope Bridge"); }
         };
         auto index = day - 1;
         if (index < 0) {

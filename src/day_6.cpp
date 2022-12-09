@@ -35,7 +35,7 @@ namespace {
              }
         );
         auto [index, last_letter] = (*tuples)[n-1];
-        return index + 1;
+        return static_cast<int>(index) + 1;
     }
 }
 
