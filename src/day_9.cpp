@@ -84,10 +84,9 @@ namespace {
         point_set tail_positions;
         auto rope = ::rope(length_of_rope, { 0,0 });
         tail_positions.insert(rope.back());
-        for (auto move : moves) {
-            auto [dir, dist] = move;
-            for (int i = 0; i < dist; ++i) {
-                rope = move_rope(rope, dir);
+        for (auto [direction, distance] : moves) {
+            for (int i = 0; i < distance; ++i) {
+                rope = move_rope(rope, direction);
                 tail_positions.insert(rope.back());
             }
         }
