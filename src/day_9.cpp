@@ -65,56 +65,37 @@ namespace {
         return std::max(std::abs(pt.x), std::abs(pt.y));
     }
 
-    struct rope {
-        point head;
-        point tail;
-    };
-
+    using rope = std::vector<point>;
     using movement = std::tuple<direction, int>;
 
-    std::string draw_rope(const rope& r, int min_x, int min_y, int max_x, int max_y) {
-        std::stringstream ss;
-        for (auto y = max_y-1; y >= min_y; --y) {
-            for (auto x = min_x; x < max_x; ++x) {
-                char ch = '.';
-                if (x == 0 && y == 0) {
-                    ch = 's';
-                }
-                if (x == r.tail.x && y == r.tail.y) {
-                    ch = 'T';
-                }
-                if (x == r.head.x && y == r.head.y) {
-                    ch = 'H';
-                }
-                ss << ch;
-            }
-            ss << "\n";
-        }
-        return ss.str();
-    }
-
-    rope move_rope(const rope& r, direction dir) {
+    point move_head(const point& head, direction dir) {
         const static std::unordered_map<direction, point> dir_to_delta = {
             {direction::up, {0,1}},
             {direction::right, {1,0}},
             {direction::down, {0,-1}},
             {direction::left, {-1,0}}
         };
+        return head + dir_to_delta.at(dir);
+    }
 
-        auto new_head = r.head + dir_to_delta.at(dir);
-        auto tail_delta = new_head - r.tail;
-        if (max_delta(tail_delta) <= 1) {
-            return {
-                new_head,
-                r.tail
-            };
+    point move_link(const point& prev, const point& link) {
+        auto link_delta = prev - link;
+        if (max_delta(link_delta) <= 1) {
+            return link;
         }
-        auto new_tail = r.tail + normalize(tail_delta);
+        return link + normalize(link_delta);
+    }
 
-        return {
-            new_head,
-            new_tail
-        };
+    rope move_rope(const rope& r, direction dir) {
+        rope new_rope(r.size());
+        for (int i = 0; i < r.size(); ++i) {
+            if (i == 0) {
+                new_rope[0] = move_head(r[0], dir);
+            } else {
+                new_rope[i] = move_link(new_rope[i - 1], r[i]);
+            }
+        }
+        return new_rope;
     }
 
     movement parse_line_of_input(const std::string& line) {
@@ -131,54 +112,26 @@ namespace {
         };
     }
 
-    int unique_tail_positions(const auto& moves) {
+    int unique_tail_positions(const auto& moves, int length_of_rope) {
         point_set tail_positions;
-        ::rope rope = { {0,0},{0,0} };
-        tail_positions.insert(rope.tail);
+        auto rope = ::rope(length_of_rope, { 0,0 });
+        tail_positions.insert(rope.back());
         for (auto move : moves) {
             auto [dir, dist] = move;
             for (int i = 0; i < dist; ++i) {
                 rope = move_rope(rope, dir);
-                tail_positions.insert(rope.tail);
+                tail_positions.insert(rope.back());
             }
         }
         return static_cast<int>(tail_positions.size());
     }
 }
 
-
-
 void aoc::day_9(int day, const std::string& title) {
     auto input = file_to_string_vector(input_path(day, 1));
-    /*
-    std::vector<std::string> input = {
-        "R 4",
-        "U 4",
-        "L 3",
-        "D 1",
-        "R 4",
-        "D 1",
-        "L 5",
-        "R 2"
-    };
-    */
     auto moves = input | rv::transform(parse_line_of_input) | r::to_vector;
 
-    /*
-    ::rope rope = { {0,0},{0,0} };
-
-    std::cout << draw_rope(rope, 0, 0, 6, 6) << "\n";
-    for (auto move : moves) {
-        auto [dir, dist] = move;
-        for (int i = 0; i < dist; ++i) {
-            rope = move_rope(rope, dir);
-            std::cout << draw_rope(rope, 0, 0, 6, 6) << "\n";
-            std::getchar();
-        }
-    }
-    */
-
     std::cout << header(day, title);
-    std::cout << "  part 1: " << unique_tail_positions(moves) << "\n";
-    std::cout << "  part 2: " << 0 << "\n";
+    std::cout << "  part 1: " << unique_tail_positions(moves, 2) << "\n";
+    std::cout << "  part 2: " << unique_tail_positions(moves, 10) << "\n";
 }
