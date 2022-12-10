@@ -13,8 +13,8 @@ namespace rv = ranges::views;
 /*------------------------------------------------------------------------------------------------*/
 
 namespace{
-    using statement = std::tuple<int, int>;
-    using program = std::vector<statement>;
+    using instruction = std::tuple<int, int>;
+    using program = std::vector<instruction>;
 
     struct cpu_state {
         int x_register;
@@ -30,7 +30,7 @@ namespace{
         int end_cycle;
     };
     
-    statement parse_line_of_input(const std::string& line) {
+    instruction parse_line_of_input(const std::string& line) {
         auto pieces = aoc::split(line, ' ');
         bool is_noop = pieces[0] == "noop";
         auto duration = is_noop ? 1 : 2;
@@ -39,8 +39,8 @@ namespace{
     }
 
     std::tuple<cpu_state_range, cpu_state> execute_statement(
-            const statement& statement, const cpu_state& state) {
-        auto [duration, increment] = statement;
+            const instruction& instruction, const cpu_state& state) {
+        auto [duration, increment] = instruction;
         cpu_state_range cpu_states = {
             .x_register = state.x_register,
             .start_cycle = state.cycle + 1,
@@ -53,8 +53,8 @@ namespace{
     int sum_of_signal_strengths(const program& prog) {
         cpu_state cpu;
         int sum_of_strengths = 0;
-        for (const auto& statement : prog) {
-            const auto& [range, next_state] = execute_statement(statement, cpu);
+        for (const auto& instruction : prog) {
+            const auto& [range, next_state] = execute_statement(instruction, cpu);
             for (int cycle = range.start_cycle; cycle <= range.end_cycle; ++cycle) {
                 if (cycle % 40 == 20) {
                     sum_of_strengths += cycle * range.x_register;
@@ -71,8 +71,8 @@ namespace{
         cpu_state cpu;
 
         ss << "  ";
-        for (const auto& statement : prog) {
-            const auto& [range, next_state] = execute_statement(statement, cpu);
+        for (const auto& instruction : prog) {
+            const auto& [range, next_state] = execute_statement(instruction, cpu);
             for (int cycle = range.start_cycle; cycle <= range.end_cycle; ++cycle) {
                 int pos = (cycle - 1) % columns;
                 char pixel = (pos >= range.x_register - 1 && pos <= range.x_register + 1) ? 
