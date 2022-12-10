@@ -13,11 +13,7 @@ namespace rv = ranges::views;
 /*------------------------------------------------------------------------------------------------*/
 
 namespace{
-    enum class op_code {
-        noop,
-        addx
-    };
-    using statement = std::tuple<op_code, int>;
+    using statement = std::tuple<int, int>;
     using program = std::vector<statement>;
 
     struct cpu_state {
@@ -36,23 +32,21 @@ namespace{
     
     statement parse_line_of_input(const std::string& line) {
         auto pieces = aoc::split(line, ' ');
-        auto op = (pieces[0] == "noop") ? op_code::noop : op_code::addx;
-        int arg = (op == op_code::addx) ? std::stoi(pieces[1]) : 0;
-        return { op, arg };
+        bool is_noop = pieces[0] == "noop";
+        auto duration = is_noop ? 1 : 2;
+        int incr = is_noop ? 0 : std::stoi(pieces[1]);
+        return { duration, incr };
     }
 
     std::tuple<cpu_state_range, cpu_state> execute_statement(
             const statement& statement, const cpu_state& state) {
-        auto [op, arg] = statement;
+        auto [duration, increment] = statement;
         cpu_state_range cpu_states = {
             .x_register = state.x_register,
             .start_cycle = state.cycle + 1,
-            .end_cycle = state.cycle + ((op == op_code::noop) ? 1 : 2)
+            .end_cycle = state.cycle + duration
         };
-        cpu_state next_cpu_state(
-            (op == op_code::addx) ? arg + state.x_register : state.x_register,
-            cpu_states.end_cycle
-        );
+        cpu_state next_cpu_state( state.x_register + increment, cpu_states.end_cycle);
         return { cpu_states, next_cpu_state };
     }
 
