@@ -58,13 +58,23 @@ namespace {
         return head + dir_to_delta.at(dir);
     }
 
-    point move_link(const point& prev, const point& link) {
+    point move_knot(const point& prev, const point& link) {
         auto delta = prev - link;
         return (std::max(std::abs(delta.x), std::abs(delta.y)) <= 1) ?
             link :
             link + point{ sgn(delta.x), sgn(delta.y) };
     }
 
+    rope move_rope(const rope& r, char direction) {
+        auto dummy_head = move_head(move_head(r.front(), direction), direction);
+        return rv::concat(rv::single(dummy_head), rv::all(r)) |
+            rv::partial_sum(move_knot) | rv::drop(1) | r::to_vector;
+    }
+
+    /* 
+    * 
+    // non-range version below...
+    
     rope move_rope(const rope& r, char direction) {
         rope new_rope(r.size());
         for (int i = 0; i < r.size(); ++i) {
@@ -74,6 +84,8 @@ namespace {
         }
         return new_rope;
     }
+    
+    */
 
     movement parse_line_of_input(const std::string& line) {
         auto pieces = aoc::split(line, ' ');
