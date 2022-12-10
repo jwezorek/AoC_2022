@@ -5,7 +5,7 @@
 #include <filesystem>
 #include <functional>
 #include <tuple>
-#include <unordered_map>
+#include <sstream>
 
 namespace r = ranges;
 namespace rv = ranges::views;
@@ -54,7 +54,7 @@ namespace{
             {"noop", op_code::noop},
             {"addx", op_code::addx}
         };
-        auto op = str_to_op.at(pieces[0]);
+        auto op = (pieces[0] == "noop") ? op_code::noop : op_code::addx;
         if (pieces.size() == 2) {
             return { op, std::stoi(pieces[1]) };
         } else {
@@ -63,18 +63,15 @@ namespace{
     }
 
     int cycle_per_op(op_code op) {
-        if (op == op_code::noop) {
-            return 1;
-        } else {
-            return 2;
-        }
+        return (op == op_code::noop) ? 1 : 2;
     }
 
     int do_op(op_code op, int arg, int x_reg) {
         return (op == op_code::addx) ? arg + x_reg : x_reg;
     }
 
-    std::tuple<cpu_state_range, cpu_state> execute_statement(const statement& statement, const cpu_state& state) {
+    std::tuple<cpu_state_range, cpu_state> execute_statement(
+            const statement& statement, const cpu_state& state) {
         cpu_state_range cpu_states = {
             .x_register = state.x_register,
             .start_cycle = state.cycle + 1,
@@ -102,17 +99,39 @@ namespace{
         }
         return r::accumulate(signal_strengths, 0);
     }
+
+    std::string draw_rasters(const program& prog) {
+        constexpr auto columns = 40;
+        std::stringstream ss;
+        cpu_state cpu;
+
+        ss << "  ";
+        for (const auto& statement : prog) {
+            const auto& [range, next_state] = execute_statement(statement, cpu);
+            for (int cycle = range.start_cycle; cycle <= range.end_cycle; ++cycle) {
+                int pos = (cycle - 1) % columns;
+                char pixel = (pos >= range.x_register - 1 && pos <= range.x_register + 1) ? 
+                    '#' : ' ';
+                ss << pixel;
+                if (pos+1 == columns) {
+                    ss << "\n  ";
+                }
+            }
+            cpu = next_state;
+        }
+        ss << "\n";
+
+        return ss.str();
+    }
 }
 
 void aoc::day_10(int day, const std::string& title) {
     auto input = file_to_string_vector(input_path(day, 1));
-    //auto input = file_to_string_vector(input_path(day, {}));
     auto prog = input | rv::transform(parse_line_of_input) | r::to_vector;
 
-    std::vector<int> cycles = { 20, 60, 100, 140, 180, 220 };
-
     std::cout << header(day, title);
-    std::cout << "  part 1: " << sum_of_signal_strengths(prog, cycles) << "\n";
-    std::cout << "  part 2: " << 0 << "\n";
-
+    std::cout << "  part 1: " << 
+        sum_of_signal_strengths(prog, { 20, 60, 100, 140, 180, 220 }) << "\n\n";
+    std::cout << "  part 2: \n\n";
+    std::cout << draw_rasters(prog);
 }
