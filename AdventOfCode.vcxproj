@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="src\days.cpp" />
     <ClCompile Include="src\day_1.cpp" />
+    <ClCompile Include="src\day_10.cpp" />
     <ClCompile Include="src\day_2.cpp" />
     <ClCompile Include="src\day_3.cpp" />
     <ClCompile Include="src\day_4.cpp" />

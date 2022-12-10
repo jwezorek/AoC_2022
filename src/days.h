@@ -1,10 +1,11 @@
 #pragma once
 
 #include <string>
+#include <optional>
 /*------------------------------------------------------------------------------------------------*/
 
 namespace aoc {
-    std::string input_path(int day, int part);
+    std::string input_path(int day, std::optional<int> part);
     std::string header(int day, const std::string& title);
 
     void day_1(int day, const std::string& title);
@@ -16,4 +17,5 @@ namespace aoc {
     void day_7(int day, const std::string& title);
     void day_8(int day, const std::string& title);
     void day_9(int day, const std::string& title);
+    void day_10(int day, const std::string& title);
 }

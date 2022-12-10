@@ -12,10 +12,11 @@ namespace {
     const std::string file_prefix = "day";
 }
 
-std::string aoc::input_path(int day, int part) {
+std::string aoc::input_path(int day, std::optional<int> part) {
+    std::string part_tag = (part) ? std::to_string(*part) : std::string("test");
     std::string fname = file_prefix + "_" +
         std::to_string(day) + "_" +
-        std::to_string(part) + ".txt";
+        part_tag + ".txt";
     fs::path inp_path = fs::current_path() / input_dir / fname;
     return inp_path.string();
 }

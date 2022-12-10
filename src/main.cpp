@@ -10,15 +10,16 @@
 namespace {
     int do_advent_of_code_2022(int day) {
         const static auto advent_of_code_2022 = std::vector<std::function<void()>>{
-            []() {aoc::day_1(1, "Calory Counting"); },
-            []() {aoc::day_2(2, "Rock Paper Scissors"); },
-            []() {aoc::day_3(3, "Rucksack Reorganization"); },
-            []() {aoc::day_4(4, "Camp Cleanup"); },
-            []() {aoc::day_5(5, "Supply Stacks"); },
-            []() {aoc::day_6(6, "Tuning Trouble"); },
-            []() {aoc::day_7(7, "No Space Left On Device"); },
-            []() {aoc::day_8(8, "Treetop Tree House"); },
-            []() {aoc::day_9(9, "Rope Bridge"); }
+            [](){ aoc::day_1(1, "Calory Counting"); },
+            [](){ aoc::day_2(2, "Rock Paper Scissors"); },
+            [](){ aoc::day_3(3, "Rucksack Reorganization"); },
+            [](){ aoc::day_4(4, "Camp Cleanup"); },
+            [](){ aoc::day_5(5, "Supply Stacks"); },
+            [](){ aoc::day_6(6, "Tuning Trouble"); },
+            [](){ aoc::day_7(7, "No Space Left On Device"); },
+            [](){ aoc::day_8(8, "Treetop Tree House"); },
+            [](){ aoc::day_9(9, "Rope Bridge"); },
+            [](){ aoc::day_10(10, "Cathode-Ray Tube"); }
         };
         auto index = day - 1;
         if (index < 0) {
