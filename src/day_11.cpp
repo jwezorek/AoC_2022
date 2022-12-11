@@ -82,20 +82,6 @@ namespace {
             r::to_vector;
     }
 
-    std::string debug_monkey(const monkey& monk) {
-        std::stringstream ss;
-        ss << "index: " << monk.index << "\n";
-        ss << "starting items: ";
-        for (auto start : monk.items) {
-            ss << start << " ";
-        }
-        ss << "\noperation: " << monk.operation(3) << " " << monk.operation(5) << "\n";
-        ss << "test divisor: " << monk.test_divisor << "\n";
-        ss << "if true monkey: " << monk.if_true_monkey << "\n";
-        ss << "if false monkey: " << monk.if_false_monkey << "\n";
-        return ss.str();
-    }
-
     void perform_turn(std::vector<monkey>& monkeys, int n, std::optional<int64_t> modulo) {
         auto& monkey = monkeys[n];
         while (!monkey.items.empty()) {
