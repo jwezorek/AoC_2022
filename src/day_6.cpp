@@ -39,9 +39,9 @@ namespace {
     }
 }
 
-void aoc::day_6(int day, const std::string& title) {
+void aoc::day_6(const std::string& title) {
     auto input = file_to_string(input_path(6, 1));
-    std::cout << header(day, title);
+    std::cout << header(6, title);
     std::cout << "   part 1: " << 
         first_appearance_of_n_unique_letters(input, 4) << "\n";
     std::cout << "   part 2: " <<

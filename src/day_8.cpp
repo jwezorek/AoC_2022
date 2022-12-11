@@ -181,11 +181,11 @@ namespace{
     }
 }
 
-void aoc::day_8(int day, const std::string& title) {
-    auto input_strings = file_to_string_vector(input_path(day, 1));
+void aoc::day_8( const std::string& title) {
+    auto input_strings = file_to_string_vector(input_path(8, 1));
     auto input = strings_to_2D_array_of_digits(input_strings);
 
-    std::cout << header(day, title);
+    std::cout << header(8, title);
     std::cout << "  part 1: " << num_visible(input) << "\n";
     std::cout << "  part 2: " << highest_scenic_score(input) << "\n";
 }

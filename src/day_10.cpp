@@ -90,11 +90,11 @@ namespace{
     }
 }
 
-void aoc::day_10(int day, const std::string& title) {
-    auto input = file_to_string_vector(input_path(day, 1));
+void aoc::day_10(const std::string& title) {
+    auto input = file_to_string_vector(input_path(10, 1));
     auto prog = input | rv::transform(parse_line_of_input) | r::to_vector;
 
-    std::cout << header(day, title);
+    std::cout << header(10, title);
     std::cout << "  part 1: " << sum_of_signal_strengths(prog ) << "\n\n";
     std::cout << "  part 2: \n\n";
     std::cout << draw_rasters(prog);

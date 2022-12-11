@@ -125,10 +125,10 @@ namespace {
     }
 }
 
-void aoc::day_5(int day, const std::string& title) {
+void aoc::day_5( const std::string& title) {
     auto input = file_to_string_vector(input_path(5, 1));
     auto [stacks, moves] = parse_input(input);
-    std::cout << header(day, title);
+    std::cout << header(5, title);
     std::cout << "   part 1: " << do_part_one(stacks, moves) << "\n";
     std::cout << "   part 2: " << do_part_two(stacks, moves) << "\n";
 }

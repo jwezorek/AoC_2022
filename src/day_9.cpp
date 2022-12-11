@@ -106,11 +106,11 @@ namespace {
     }
 }
 
-void aoc::day_9(int day, const std::string& title) {
-    auto input = file_to_string_vector(input_path(day, 1));
+void aoc::day_9(const std::string& title) {
+    auto input = file_to_string_vector(input_path(9, 1));
     auto moves = input | rv::transform(parse_line_of_input) | r::to_vector;
 
-    std::cout << header(day, title);
+    std::cout << header(9, title);
     std::cout << "  part 1: " << unique_tail_positions(moves, 2) << "\n";
     std::cout << "  part 2: " << unique_tail_positions(moves, 10) << "\n";
 }

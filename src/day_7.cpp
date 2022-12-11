@@ -150,12 +150,12 @@ namespace {
     }
 }
 
-void aoc::day_7(int day, const std::string& title) {
+void aoc::day_7(const std::string& title) {
     auto input = file_to_string_vector(input_path(7, 1));
     auto commands = input | rv::transform(parse_line);
     auto root_dir = construct_file_system(commands);
 
-    std::cout << header(day, title);
+    std::cout << header(7, title);
     std::cout << "   part 1: " << size_of_directories_at_most_100000(root_dir) << "\n";
     std::cout << "   part 2: " << size_of_directory_to_delete(root_dir) << "\n";
 }

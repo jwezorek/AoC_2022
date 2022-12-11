@@ -54,7 +54,7 @@ namespace {
     }
 }
 
-void aoc::day_3(int day, const std::string& title) {
+void aoc::day_3(const std::string& title) {
     auto input = file_to_string_vector(input_path(3, 1));
     auto part_1 = r::accumulate(
         input | rv::transform(
@@ -76,7 +76,7 @@ void aoc::day_3(int day, const std::string& title) {
         0
     );
 
-    std::cout << header(day, title);
+    std::cout << header(3, title);
     std::cout << "  part 1: " << part_1 << "\n";
     std::cout << "  part 2: " << part_2 << "\n";
 }
