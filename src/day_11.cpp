@@ -82,7 +82,7 @@ namespace {
             r::to_vector;
     }
 
-    void perform_turn(std::vector<monkey>& monkeys, int n, std::optional<int64_t> modulo) {
+    void perform_turn(std::vector<monkey>& monkeys, int n, std::optional<int64_t> modulus) {
         auto& monkey = monkeys[n];
         while (!monkey.items.empty()) {
             monkey.inspection_count++;
@@ -90,8 +90,8 @@ namespace {
             monkey.items.pop_front();
 
             item = monkey.operation(item);
-            if (modulo) {
-                item = item % *modulo;
+            if (modulus) {
+                item = item % modulus.value();
             } else {
                 item /= 3;
             }
@@ -102,14 +102,15 @@ namespace {
         }
     }
 
-    void perform_round(std::vector<monkey>& monkeys, std::optional<int64_t> modulo) {
+    void perform_round(std::vector<monkey>& monkeys, std::optional<int64_t> modulus) {
         int n = static_cast<int>(monkeys.size());
         for (int i = 0; i < n; ++i) {
-            perform_turn(monkeys, i, modulo);
+            perform_turn(monkeys, i, modulus);
         }
     }
 
-    int64_t calculate_modulo(const std::vector<monkey>& monkeys) {
+    int64_t calculate_modulus(const std::vector<monkey>& monkeys) {
+        // the test divisors are all prime so LCM is just their product...
         return r::accumulate(
             monkeys | rv::transform([](auto&& m)->int64_t {return m.test_divisor; }),
             static_cast<int64_t>(1),
@@ -118,10 +119,10 @@ namespace {
     }
 
     int64_t level_of_monkey_business(const std::vector<monkey>& input_monkeys, 
-            int num_rounds, std::optional<int64_t> modulo) {
+            int num_rounds, std::optional<int64_t> modulus) {
         auto monkeys = input_monkeys;
         for (int i = 0; i < num_rounds; i++) {
-            perform_round(monkeys, modulo);
+            perform_round(monkeys, modulus);
         }
         auto sorted_counts = monkeys | 
             rv::transform([](auto&& m) {return m.inspection_count; }) |
@@ -138,6 +139,6 @@ void aoc::day_11(const std::string& title) {
     auto monkeys = parse_input(input);
     std::cout << header(11, title);
     std::cout << "  part 1: " << level_of_monkey_business(monkeys, 20, {}) << "\n";
-    auto modulo = calculate_modulo(monkeys);
-    std::cout << "  part 2: " << level_of_monkey_business(monkeys, 10000,modulo) << "\n";
+    auto modulo = calculate_modulus(monkeys);
+    std::cout << "  part 2: " << level_of_monkey_business(monkeys, 10000, modulo) << "\n";
 }
