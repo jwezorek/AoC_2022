@@ -187,13 +187,13 @@ namespace {
 
     int dijkstra_shortest_path(const height_map& hgt_map) {
         auto [wd,hgt] = dimensions(hgt_map.grid);
-        grid<int> dist = init_grid({ wd,hgt }, wd * hgt + 1);
-        priority_queue queue;
 
+        grid<int> dist = init_grid({ wd,hgt }, wd * hgt + 1);
         for (auto loc : hgt_map.src) {
             dist[loc.row][loc.col] = 0;
         }
 
+        priority_queue queue;
         for (grid_loc loc : all_grid_locs(hgt_map.grid)) {
             queue.insert(loc, dist[loc.row][loc.col]);
         }
