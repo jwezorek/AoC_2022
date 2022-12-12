@@ -10,17 +10,18 @@
 namespace {
     int do_advent_of_code_2022(int day) {
         const static auto advent_of_code_2022 = std::vector<std::function<void()>>{
-            [](){aoc::day_1( "Calory Counting");},
-            [](){aoc::day_2( "Rock Paper Scissors");},
-            [](){aoc::day_3( "Rucksack Reorganization");},
-            [](){aoc::day_4( "Camp Cleanup");},
-            [](){aoc::day_5( "Supply Stacks");},
-            [](){aoc::day_6( "Tuning Trouble");},
-            [](){aoc::day_7( "No Space Left On Device");},
-            [](){aoc::day_8( "Treetop Tree House");},
-            [](){aoc::day_9( "Rope Bridge");},
-            [](){aoc::day_10("Cathode-Ray Tube");},
-            [](){aoc::day_11("Monkey in the Middle");}
+            []() {aoc::day_1(  "Calory Counting" ); },
+            []() {aoc::day_2(  "Rock Paper Scissors" ); },
+            []() {aoc::day_3(  "Rucksack Reorganization" ); },
+            []() {aoc::day_4(  "Camp Cleanup" ); },
+            []() {aoc::day_5(  "Supply Stacks" ); },
+            []() {aoc::day_6(  "Tuning Trouble" ); },
+            []() {aoc::day_7(  "No Space Left On Device" ); },
+            []() {aoc::day_8(  "Treetop Tree House" ); },
+            []() {aoc::day_9(  "Rope Bridge" ); },
+            []() {aoc::day_10( "Cathode-Ray Tube" ); },
+            []() {aoc::day_11( "Monkey in the Middle" ); },
+            []() {aoc::day_12( "Hill Climbing Algorithm" ); }
         };
         auto index = day - 1;
         if (index < 0) {

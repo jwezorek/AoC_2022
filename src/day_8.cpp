@@ -27,10 +27,10 @@ namespace{
     };
 
     struct hash_grid_loc {
-        size_t operator()(const grid_loc& loc) const {
+        size_t operator()(const grid_loc& grid_loc) const {
             size_t seed = 0;
-            boost::hash_combine(seed, loc.col);
-            boost::hash_combine(seed, loc.row);
+            boost::hash_combine(seed, grid_loc.col);
+            boost::hash_combine(seed, grid_loc.row);
             return seed;
         }
     };
@@ -105,19 +105,19 @@ namespace{
 
     auto visible(auto rng) {
         return rv::zip(
-                rv::concat(rv::single(-1), running_max(rng | rv::transform([](auto&& loc) {return loc.value; }))),
+                rv::concat(rv::single(-1), running_max(rng | rv::transform([](auto&& grid_loc) {return grid_loc.value; }))),
                 rng
             ) | 
             rv::remove_if(
                 [](auto&& tup) {
-                    auto [max, loc] = tup;
-                    return loc.value <= max;
+                    auto [max, grid_loc] = tup;
+                    return grid_loc.value <= max;
                 }
             ) |
             rv::transform(
                 [](auto&& tup) {
-                    const auto& [max, loc] = tup;
-                    return loc;
+                    const auto& [max, grid_loc] = tup;
+                    return grid_loc;
                 }
             );
     }
@@ -140,7 +140,7 @@ namespace{
         int max_height = ary[row][col];
         int count = 0;
         for (int v : line(ary, col, row, col_offset, row_offset) | 
-                rv::drop(1) | rv::transform([](const auto& loc) {return loc.value; })) {
+                rv::drop(1) | rv::transform([](const auto& grid_loc) {return grid_loc.value; })) {
             count++;
             if (v >= max_height) {
                 return count;
@@ -173,8 +173,8 @@ namespace{
         return r::max(
             all_grid_locs(ary) |
             rv::transform(
-                [&ary](auto loc)->int {
-                    return scenic_score(ary, loc.col, loc.row);
+                [&ary](auto grid_loc)->int {
+                    return scenic_score(ary, grid_loc.col, grid_loc.row);
                 }
             )
         );
