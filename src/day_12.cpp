@@ -188,7 +188,6 @@ namespace {
     int dijkstra_shortest_path(const height_map& hgt_map) {
         auto [wd,hgt] = dimensions(hgt_map.grid);
         grid<int> dist = init_grid({ wd,hgt }, wd * hgt + 1);
-        grid<grid_loc> prev = init_grid({ wd,hgt }, grid_loc{ -1,-1 });
         priority_queue queue;
 
         for (auto loc : hgt_map.src) {
@@ -206,7 +205,6 @@ namespace {
 
                 if (alt < dist[v.row][v.col]) {
                     dist[v.row][v.col] = alt;
-                    prev[v.row][v.col] = u;
                     queue.change_priority(v, alt);
                 }
             }
