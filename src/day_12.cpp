@@ -201,11 +201,10 @@ namespace {
         while (!queue.empty()) {
             auto u = queue.extract_min();
             for (auto v : neighbors(hgt_map.grid, u)) {
-                auto alt = dist[u.row][u.col] + 1;
-
-                if (alt < dist[v.row][v.col]) {
-                    dist[v.row][v.col] = alt;
-                    queue.change_priority(v, alt);
+                auto dist_through_u = dist[u.row][u.col] + 1;
+                if (dist_through_u < dist[v.row][v.col]) {
+                    dist[v.row][v.col] = dist_through_u;
+                    queue.change_priority(v, dist_through_u);
                 }
             }
         }
