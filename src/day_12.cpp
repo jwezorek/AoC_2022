@@ -31,9 +31,9 @@ namespace {
     };
 
     struct height_map {
-        std::vector<grid_loc> starts;
+        std::vector<grid_loc> src;
         grid_loc end;
-        grid<int> heights;
+        grid<int> grid;
     };
 
     height_map input_to_height_map(const std::vector<std::string>& input) {
@@ -41,7 +41,7 @@ namespace {
         auto to_loc = [](auto x, auto y)->grid_loc {
             return { static_cast<int>(x), static_cast<int>(y) };
         };
-        hm.heights = rv::enumerate(input) |
+        hm.grid = rv::enumerate(input) |
             rv::transform(
                 [&](auto&& y_row)->std::vector<int> {
                     const auto[y, row] = y_row;
@@ -50,7 +50,7 @@ namespace {
                             [&](auto x_item) { 
                                 auto [x, ch] = x_item;
                                 if (ch == 'S') {
-                                    hm.starts.push_back(to_loc(x, y));
+                                    hm.src.push_back(to_loc(x, y));
                                     return 0;
                                 }
                                 if (ch == 'E') {
@@ -186,22 +186,22 @@ namespace {
      }
 
     int dijkstra_shortest_path(const height_map& hgt_map) {
-        auto [wd,hgt] = dimensions(hgt_map.heights);
+        auto [wd,hgt] = dimensions(hgt_map.grid);
         grid<int> dist = init_grid({ wd,hgt }, wd * hgt + 1);
         grid<grid_loc> prev = init_grid({ wd,hgt }, grid_loc{ -1,-1 });
         priority_queue queue;
 
-        for (auto loc : hgt_map.starts) {
+        for (auto loc : hgt_map.src) {
             dist[loc.row][loc.col] = 0;
         }
 
-        for (grid_loc loc : all_grid_locs(hgt_map.heights)) {
+        for (grid_loc loc : all_grid_locs(hgt_map.grid)) {
             queue.insert(loc, dist[loc.row][loc.col]);
         }
 
         while (!queue.empty()) {
             auto u = queue.extract_min();
-            for (auto v : neighbors(hgt_map.heights, u)) {
+            for (auto v : neighbors(hgt_map.grid, u)) {
                 auto alt = dist[u.row][u.col] + 1;
 
                 if (alt < dist[v.row][v.col]) {
@@ -224,11 +224,12 @@ void aoc::day_12(const std::string& title) {
     std::cout << header(1, title);
     std::cout << "  part 1: " << dijkstra_shortest_path(hgt_map) << "\n";
 
-    hgt_map.starts.clear();
-    for (auto loc : all_grid_locs(hgt_map.heights)) {
-        if (hgt_map.heights[loc.row][loc.col] == 0) {
-            hgt_map.starts.push_back(loc);
-        }
-    }
-    std::cout << "  part 2: " << dijkstra_shortest_path(hgt_map) << "\n";
+    auto multi_src = height_map{
+        .src = all_grid_locs(hgt_map.grid) |
+            rv::remove_if([&hgt_map](auto&& loc) { return hgt_map.grid[loc.row][loc.col] != 0; }) |
+            r::to_vector,
+        .end = hgt_map.end,
+        .grid = hgt_map.grid
+    };
+    std::cout << "  part 2: " << dijkstra_shortest_path(multi_src) << "\n";
 }
