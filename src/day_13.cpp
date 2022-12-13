@@ -51,26 +51,21 @@ namespace {
         return parser;
     }
 
-    template<class... Ts> struct overloaded : Ts...
-    { using Ts::operator()...; };
-
-    template<class... Ts> overloaded(Ts...)->overloaded<Ts...>;
-
     std::string to_string(const list& list) {
-        std::stringstream ss;
-        std::visit(
-            overloaded{
-                [&ss](int val) { ss << val; },
-                [&ss](const std::vector<wrapped_list>& lst) {
-                    ss << "[ ";
-                    for (const auto& itm : lst) {
-                        ss << to_string(itm.val) << " ";
-                    }
-                    ss << "]";
+        struct visitor {
+            std::stringstream& ss;
+            visitor(std::stringstream& ss) : ss(ss) {}
+            void operator()(int val) const { ss << val; }
+            void operator()(const std::vector<wrapped_list>& lst) {
+                ss << "[ ";
+                for (const auto& itm : lst) {
+                    ss << to_string(itm.val) << " ";
                 }
-            },
-            list
-        );
+                ss << "]";
+            }
+        };
+        std::stringstream ss;
+        std::visit( visitor(ss), list );
         return ss.str();
     }
 
