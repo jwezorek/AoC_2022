@@ -35,17 +35,16 @@ namespace {
         auto parser = peg::parser(ss.str());
         
         parser["Expr"] = [](const peg::SemanticValues& vs)->list {
-            std::vector<wrapped_list> args(vs.size());
-            std::transform(vs.begin(), vs.end(), args.begin(),
-                [](auto vsi)->wrapped_list {
-                    if (vsi.type() == typeid(int)) {
-                        return wrapped_list{ std::any_cast<int>(vsi) };
-                    } else {
-                        return wrapped_list{ std::any_cast<list>(vsi) };
+            return vs |
+                rv::transform(
+                    [](auto vsi)->wrapped_list {
+                        if (vsi.type() == typeid(int)) {
+                            return wrapped_list{ std::any_cast<int>(vsi) };
+                        } else {
+                            return wrapped_list{ std::any_cast<list>(vsi) };
+                        }
                     }
-                }
-            );
-            return list{ args };
+            ) | r::to_vector;
         };
 
         parser["Number"] = [](const peg::SemanticValues& vs)->int {
