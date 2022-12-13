@@ -22,7 +22,7 @@ namespace {
             []() {aoc::day_10( "Cathode-Ray Tube" ); },
             []() {aoc::day_11( "Monkey in the Middle" ); },
             []() {aoc::day_12( "Hill Climbing Algorithm" ); },
-            []() {aoc::day_13( "TODO" ); },
+            []() {aoc::day_13( "Distress Signal" ); },
             []() {aoc::day_14( "TODO" ); },
             []() {aoc::day_15( "TODO" ); },
             []() {aoc::day_16( "TODO" ); },
