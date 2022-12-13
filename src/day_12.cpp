@@ -79,45 +79,36 @@ namespace {
 
     class priority_queue {
         using map_impl = std::multimap<int, grid_loc>;
-        map_impl priority_to_loc;
-        loc_map<map_impl::iterator> item_to_queue_item;
+        map_impl priority_to_loc_;
+        loc_map<map_impl::iterator> loc_to_mmap_iter_;
 
     public:
         priority_queue()
         {}
 
         grid_loc extract_min() {
-            auto first = priority_to_loc.begin();
+            auto first = priority_to_loc_.begin();
             auto loc = first->second;
-            priority_to_loc.erase(first);
-            item_to_queue_item.erase(loc);
+            priority_to_loc_.erase(first);
+            loc_to_mmap_iter_.erase(loc);
             return loc;
         }
 
         void insert(const grid_loc& loc, int priority) {
-            auto iter = priority_to_loc.insert({ priority, loc });
-            item_to_queue_item[loc] = iter;
+            auto iter = priority_to_loc_.insert({ priority, loc });
+            loc_to_mmap_iter_[loc] = iter;
         }
 
         void change_priority(const grid_loc& loc, int priority) {
-            auto iter = item_to_queue_item[loc];
-            priority_to_loc.erase(iter);
-            item_to_queue_item.erase(loc);
+            auto iter = loc_to_mmap_iter_[loc];
+            priority_to_loc_.erase(iter);
+            loc_to_mmap_iter_.erase(loc);
             insert(loc, priority);
         }
 
         bool empty() const {
-            return priority_to_loc.empty();
+            return priority_to_loc_.empty();
         }
-
-        std::string debug() {
-            std::stringstream ss;
-            for (auto [priority, item] : priority_to_loc) {
-                std::cout << priority << " ";
-            }
-            return ss.str();
-        }
-
     };
 
     template<typename T>
