@@ -19,10 +19,7 @@ namespace {
 
     struct wrapped_list;
     using list = std::variant<int, std::vector<wrapped_list>>;
-
-    struct wrapped_list {
-        list val;
-    };
+    struct wrapped_list { list val; };
 
     peg::parser make_parser() {
 
