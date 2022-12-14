@@ -132,15 +132,15 @@ namespace {
         }
         bool done = false;
         while (g.contains(pt)) {
-            if (g.at(pt.x, pt.y + 1) == tile::empty()) {
+            if (g.at(pt.x, pt.y + 1) == tile::empty) {
                 pt = { pt.x, pt.y + 1 };
                 continue;
             }
-            if (g.at(pt.x - 1, pt.y + 1) == tile::empty()) {
+            if (g.at(pt.x - 1, pt.y + 1) == tile::empty) {
                 pt = {pt.x - 1, pt.y};
                 continue;
             }
-            if (g.at(pt.x + 1, pt.y + 1) == tile::empty()) {
+            if (g.at(pt.x + 1, pt.y + 1) == tile::empty) {
                 pt = {pt.x + 1, pt.y};
                 continue;
             }
