@@ -21,6 +21,19 @@ std::vector<std::string> aoc::file_to_string_vector(const std::string& filename)
     return v;
 }
 
+std::string aoc::collapse_whitespace(const std::string& str){ 
+    std::stringstream ss;
+    for (auto i = str.begin(); i != str.end(); ++i) {
+        ss << *i;
+        if (std::isspace(*i)) {
+            while (std::isspace(*(i+1))) {
+                ++i;
+            }
+        }
+    }
+    return ss.str();
+}
+
 bool aoc::is_number(const std::string& s) {
     return !s.empty() && std::find_if(s.begin(),
         s.end(), [](unsigned char c) { return !std::isdigit(c); }) == s.end();
