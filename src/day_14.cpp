@@ -42,20 +42,8 @@ namespace {
         }
 
         bool contains(const point& pt) const {
-            return pt.x >= left() && pt.x < right() &&
-                pt.y >= 0 && pt.y < bottom();
-        }
-
-        int left() const {
-            return min_x_;
-        }
-
-        int right() const {
-            return min_x_ + static_cast<int>(ary_[0].size());
-        }
-
-        int bottom() const{
-            return static_cast<int>(ary_.size());
+            return pt.x >= min_x_ && pt.x < min_x_ + static_cast<int>(ary_[0].size()) &&
+                pt.y >= 0 && pt.y < static_cast<int>(ary_.size());
         }
 
         void set(const point& pt, tile t) {
