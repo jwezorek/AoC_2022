@@ -81,24 +81,12 @@ namespace {
         }
     }
 
-    std::string elide_non_digits(const std::string& str) {
-        return aoc::collapse_whitespace(
-                str |
-                    rv::transform(
-                        [](char ch)->char {
-                            return (std::isdigit(ch)) ? ch : ' ';
-                        }
-                    ) | r::to<std::string>()
-            );
-    }
-
     std::vector<std::vector<point>> to_polylines(const std::vector<std::string>& lines) {
         return lines |
             rv::transform(
                 [](const std::string& line)->std::vector<point> {
-                    auto pieces = aoc::split(elide_non_digits(line), ' ');
-                    return pieces | 
-                        rv::transform([](auto&& s) {return std::stoi(s); }) | 
+                    auto nums = aoc::extract_numbers(line);
+                    return nums |
                         rv::chunk(2) |
                         rv::transform(
                             [](auto&& p)->point {

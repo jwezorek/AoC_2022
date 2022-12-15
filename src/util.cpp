@@ -1,8 +1,12 @@
 #include "util.h"
+#include <range/v3/all.hpp>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+
+namespace r = ranges;
+namespace rv = ranges::views;
 
 /*------------------------------------------------------------------------------------------------*/
 
@@ -70,4 +74,22 @@ std::vector<std::vector<int>> aoc::strings_to_2D_array_of_digits(const std::vect
         }
     );
     return grid;
+}
+
+std::vector<int> aoc::extract_numbers(const std::string& str) {
+    auto just_numbers = aoc::collapse_whitespace(
+        str |
+        rv::transform(
+            [](char ch)->char {
+                return (std::isdigit(ch)) ? ch : ' ';
+            }
+        ) | r::to<std::string>()
+    );
+    auto pieces = split(just_numbers, ' ');
+    return pieces |
+        rv::transform(
+            [](const auto& p)->int {
+                return std::stoi(p);
+            }
+    ) | r::to_vector;
 }

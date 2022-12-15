@@ -9,6 +9,10 @@ namespace rv = ranges::views;
 
 /*------------------------------------------------------------------------------------------------*/
 
+namespace {
+
+}
+
 void aoc::day_15(const std::string& title) {
      std::cout << header(15, title);
      std::cout << "  part 1: " << 0 << "\n";
