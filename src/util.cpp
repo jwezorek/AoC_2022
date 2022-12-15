@@ -10,6 +10,10 @@ namespace rv = ranges::views;
 
 /*------------------------------------------------------------------------------------------------*/
 
+namespace {
+    
+}
+
 std::vector<std::string> aoc::file_to_string_vector(const std::string& filename) {
     std::vector<std::string> v;
 
@@ -76,16 +80,22 @@ std::vector<std::vector<int>> aoc::strings_to_2D_array_of_digits(const std::vect
     return grid;
 }
 
-std::vector<int> aoc::extract_numbers(const std::string& str) {
+std::vector<int> aoc::extract_numbers(const std::string& str, bool allow_negatives) {
+    std::function<bool(char)> is_digit = (allow_negatives) ?
+        [](char ch)->bool {return std::isdigit(ch); } :
+        [](char ch)->bool {return std::isdigit(ch) || ch == '-'; };
     auto just_numbers = aoc::collapse_whitespace(
         str |
         rv::transform(
-            [](char ch)->char {
-                return (std::isdigit(ch)) ? ch : ' ';
+            [is_digit](char ch)->char {
+                return (is_digit(ch)) ? ch : ' ';
             }
         ) | r::to<std::string>()
     );
     auto pieces = split(just_numbers, ' ');
+    pieces = pieces |
+        rv::remove_if([](auto&& str) {return str.empty(); }) |
+        r::to_vector;
     return pieces |
         rv::transform(
             [](const auto& p)->int {
@@ -93,3 +103,4 @@ std::vector<int> aoc::extract_numbers(const std::string& str) {
             }
     ) | r::to_vector;
 }
+
