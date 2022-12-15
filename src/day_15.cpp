@@ -18,142 +18,6 @@ namespace rv = ranges::views;
 
 namespace {
 
-    namespace comp_geom_in_C {
-        /*
-            C code cut-and-pasted from O'Rourke "Computational Geometry in C", 2nd Edition.
-        */
-
-        #define	EXIT_FAILURE 1
-        #define	X 0
-        #define	Y 1
-        #define	DIM 2               /* Dimension of points */
-        typedef	int tPointi[DIM];   /* Type integer point */
-        typedef	double tPointd[DIM];   /* Type double point */
-
-
-        char ParallelInt(tPointi a, tPointi b, tPointi c, tPointi d, tPointd p);
-        void Assigndi(tPointd p, tPointi a);
-        bool Between(tPointi a, tPointi b, tPointi c);
-        int Collinear(tPointi a, tPointi b, tPointi c);
-        int AreaSign(tPointi a, tPointi b, tPointi c);
-
-        /*---------------------------------------------------------------------
-        SegSegInt: Finds the point of intersection p between two closed
-        segments ab and cd.  Returns p and a char with the following meaning:
-           'e': The segments collinearly overlap, sharing a point.
-           'v': An endpoint (vertex) of one segment is on the other segment,
-                but 'e' doesn't hold.
-           '1': The segments intersect properly (i.e., they share a point and
-                neither 'v' nor 'e' holds).
-           '0': The segments do not intersect (i.e., they share no points).
-        Note that two collinear segments that share just one point, an endpoint
-        of each, returns 'e' rather than 'v' as one might expect.
-        ---------------------------------------------------------------------*/
-        char SegSegInt(tPointi a, tPointi b, tPointi c, tPointi d, tPointd p)
-        {
-            double  s, t;       /* The two parameters of the parametric eqns. */
-            double num, denom;  /* Numerator and denoninator of equations. */
-            char code = '?';    /* Return char characterizing intersection. */
-
-            denom = a[X] * (double)(d[Y] - c[Y]) +
-                b[X] * (double)(c[Y] - d[Y]) +
-                d[X] * (double)(b[Y] - a[Y]) +
-                c[X] * (double)(a[Y] - b[Y]);
-
-            /* If denom is zero, then segments are parallel: handle separately. */
-            if (denom == 0.0)
-                return  ParallelInt(a, b, c, d, p);
-
-            num = a[X] * (double)(d[Y] - c[Y]) +
-                c[X] * (double)(a[Y] - d[Y]) +
-                d[X] * (double)(c[Y] - a[Y]);
-            if ((num == 0.0) || (num == denom)) code = 'v';
-            s = num / denom;
-            //printf("num=%lf, denom=%lf, s=%lf\n", num, denom, s);
-
-            num = -(a[X] * (double)(c[Y] - b[Y]) +
-                b[X] * (double)(a[Y] - c[Y]) +
-                c[X] * (double)(b[Y] - a[Y]));
-            if ((num == 0.0) || (num == denom)) code = 'v';
-            t = num / denom;
-            //printf("num=%lf, denom=%lf, t=%lf\n", num, denom, t);
-
-            if ((0.0 < s) && (s < 1.0) &&
-                (0.0 < t) && (t < 1.0))
-                code = '1';
-            else if ((0.0 > s) || (s > 1.0) ||
-                (0.0 > t) || (t > 1.0))
-                code = '0';
-
-            p[X] = a[X] + s * (b[X] - a[X]);
-            p[Y] = a[Y] + s * (b[Y] - a[Y]);
-
-            return code;
-        }
-
-        char ParallelInt(tPointi a, tPointi b, tPointi c, tPointi d, tPointd p)
-        {
-            if (!Collinear(a, b, c))
-                return '0';
-
-            if (Between(a, b, c)) {
-                Assigndi(p, c);
-                return 'e';
-            }
-            if (Between(a, b, d)) {
-                Assigndi(p, d);
-                return 'e';
-            }
-            if (Between(c, d, a)) {
-                Assigndi(p, a);
-                return 'e';
-            }
-            if (Between(c, d, b)) {
-                Assigndi(p, b);
-                return 'e';
-            }
-            return '0';
-        }
-
-        void Assigndi(tPointd p, tPointi a)
-        {
-            int i;
-            for (i = 0; i < DIM; i++)
-                p[i] = a[i];
-        }
-        /*---------------------------------------------------------------------
-        Returns TRUE iff point c lies on the closed segement ab.
-        Assumes it is already known that abc are collinear.
-        ---------------------------------------------------------------------*/
-        bool  Between(tPointi a, tPointi b, tPointi c)
-        {
-            /* If ab not vertical, check betweenness on x; else on y. */
-            if (a[X] != b[X])
-                return ((a[X] <= c[X]) && (c[X] <= b[X])) ||
-                ((a[X] >= c[X]) && (c[X] >= b[X]));
-            else
-                return ((a[Y] <= c[Y]) && (c[Y] <= b[Y])) ||
-                ((a[Y] >= c[Y]) && (c[Y] >= b[Y]));
-        }
-        int Collinear(tPointi a, tPointi b, tPointi c)
-        {
-            return AreaSign(a, b, c) == 0;
-        }
-
-        int AreaSign(tPointi a, tPointi b, tPointi c)
-        {
-            double area2;
-
-            area2 = (b[0] - a[0]) * (double)(c[1] - a[1]) -
-                (c[0] - a[0]) * (double)(b[1] - a[1]);
-
-            /* The area should be an integer. */
-            if (area2 > 0.5) return  1;
-            else if (area2 < -0.5) return -1;
-            else                     return  0;
-        }
-    }
-
     struct point {
         int x;
         int y;
@@ -221,40 +85,42 @@ namespace {
             );
     }
 
+    // this function makes assumptions based on the input always being lines with 45 degree
+    // slopes and will return intersections that do not occur in the line segments but for the
+    // purposes of solving this AoC problem it doesnt matter.
     std::optional<point> line_segment_intersection(const line_segment& a, const line_segment& b) {
         const auto& [a1, a2] = a;
         const auto& [b1, b2] = b;
-        int a1_ary[2] = { a1.x, a1.y };
-        int a2_ary[2] = { a2.x, a2.y };
-        int b1_ary[2] = { b1.x, b1.y };
-        int b2_ary[2] = { b2.x, b2.y };
-        double inter_ary[2] = {
-            std::numeric_limits<double>::quiet_NaN(),
-            std::numeric_limits<double>::quiet_NaN()
-        };
-        char code = comp_geom_in_C::SegSegInt(
-            a1_ary, a2_ary, b1_ary, b2_ary, inter_ary
-        );
-        if (code == '0' || code == 'e') {
-            return {};
-        }
-        auto is_integer = [](double v) {
-            if (std::abs(v) - std::floor(std::abs(v)) > 0.000001) {
-                return false;
-            }
-            return true;
-        };
+        int64_t x1 = a1.x;
+        int64_t y1 = a1.y;
+        int64_t x2 = a2.x;
+        int64_t y2 = a2.y;
+        int64_t x3 = b1.x;
+        int64_t y3 = b1.y;
+        int64_t x4 = b2.x;
+        int64_t y4 = b2.y;
 
-        if (!is_integer(inter_ary[0]) || !is_integer(inter_ary[1])) {
+        int64_t denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+
+        if (denom == 0) {
             return {};
         }
 
+        int64_t t_numer = (x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4);
+        int64_t x_diff_scaled = t_numer * (x2 - x1);
+        int64_t y_diff_scaled = t_numer * (y2 - y1);
+
+        if (x_diff_scaled % denom != 0 || y_diff_scaled % denom != 0) {
+            return {};
+        }
+
+        auto x = x1 + x_diff_scaled / denom;
+        auto y = y1 + x_diff_scaled / denom;
         return point{
-            static_cast<int>(inter_ary[0]),
-            static_cast<int>(inter_ary[1])
+            static_cast<int>(x),
+            static_cast<int>(y)
         };
     };
-
 
     std::vector<point> circle_intersection(const circle& c_a, const circle& c_b) {
         auto edges_a = edges(c_a) | r::to_vector;
