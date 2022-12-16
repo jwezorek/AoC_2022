@@ -85,9 +85,33 @@ namespace {
             );
     }
 
-    // this function makes assumptions based on the input always being lines with 45 degree
-    // slopes and will return intersections that do not occur in the line segments but for the
-    // purposes of solving this AoC problem it doesnt matter.
+    bool is_point_on_line_segment(const line_segment& line, const point& pt) {
+        int64_t cx = pt.x;
+        int64_t cy = pt.y;
+        const auto& [a, b] = line;
+        int64_t ax = a.x;
+        int64_t ay = a.y;
+        int64_t bx = b.x;
+        int64_t by = b.y;
+
+        auto crossproduct = (cy - ay) * (bx - ax) - (cx - ax) * (by - ay);
+        
+        if (std::abs(crossproduct) > 0) {
+            return false;
+        }
+
+        auto dotproduct = (cx - ax) * (bx - ax) + (cy - ay) * (by - ay);
+        if (dotproduct < 0) {
+            return false;
+        }
+        auto squaredlengthba = (bx - ax) * (bx - ax) + (by - ay) * (by - ay);
+        if (dotproduct > squaredlengthba) {
+            return false;
+        }
+
+        return true;
+    }
+
     std::optional<point> line_segment_intersection(const line_segment& a, const line_segment& b) {
         const auto& [a1, a2] = a;
         const auto& [b1, b2] = b;
@@ -114,12 +138,23 @@ namespace {
             return {};
         }
 
-        auto x = x1 + x_diff_scaled / denom;
-        auto y = y1 + x_diff_scaled / denom;
-        return point{
-            static_cast<int>(x),
-            static_cast<int>(y)
+        // the if the numerator is greater than the denominator then
+        // the intersection is not within the line segment.
+        if (abs(t_numer) > std::abs(denom)) {
+            return {};
+        }
+
+        auto intersection = point{
+            static_cast<int>(x1 + x_diff_scaled / denom),
+            static_cast<int>(y1 + x_diff_scaled / denom)
         };
+
+        if (!is_point_on_line_segment(a, intersection) ||
+             !is_point_on_line_segment(b, intersection)) {
+            return {};
+        }
+
+        return intersection;
     };
 
     std::vector<point> circle_intersection(const circle& c_a, const circle& c_b) {
