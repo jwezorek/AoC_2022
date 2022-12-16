@@ -108,6 +108,9 @@ namespace {
         int64_t x_diff_scaled = t_numer * (x2 - x1);
         int64_t y_diff_scaled = t_numer * (y2 - y1);
 
+        // if the x and y deltas scaled by the numerator are not divisible
+        // by the denominator then the intersection does not have integer
+        // corrdinates and we do not care about it.
         if (x_diff_scaled % denom != 0 || y_diff_scaled % denom != 0) {
             return {};
         }
