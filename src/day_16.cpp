@@ -20,11 +20,16 @@ namespace {
         std::vector<std::string> neighbors;
     };
 
+    struct edge {
+        int weight;
+        int dest;
+    };
+
     struct vertex {
         std::string label;
         int index;
         int flow;
-        std::vector<int> neighbors;
+        std::vector<edge> neighbors;
     };
 
     struct graph {
@@ -64,8 +69,8 @@ namespace {
             auto& v = vertices[label_to_index[vi.label]];
             v.neighbors = vi.neighbors |
                 rv::transform(
-                    [&label_to_index](const auto& lbl)->int {
-                        return label_to_index[lbl];
+                    [&label_to_index](const auto& lbl)->edge {
+                        return { 1, label_to_index[lbl] };
                     }
                 ) | r::to_vector;
         }
@@ -144,11 +149,11 @@ namespace {
         if (!is_valve_open && g.verts[u].flow > 0) {
             return rv::concat(
                 rv::single(move{ true, -1 }),
-                g.verts[u].neighbors | rv::transform([&](int v)->move {  return { false, v }; })
+                g.verts[u].neighbors | rv::transform([&](edge e)->move {  return { false, e.dest}; })
             ) | r::to_vector;
         }
         return g.verts[u].neighbors |
-            rv::transform([&](int v)->move {  return { false, v }; }) | r::to_vector;
+            rv::transform([&](auto&& e)->move {  return { false, e.dest }; }) | r::to_vector;
     }
 
     void augment_flow(const graph& g, traversal_state& state) {
@@ -239,7 +244,6 @@ namespace {
         return max_flow;
     }
 
-    //int do_moves(const graph& g, std::vector<move>
 }
 
 /*------------------------------------------------------------------------------------------------*/
