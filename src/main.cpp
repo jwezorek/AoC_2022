@@ -25,7 +25,7 @@ namespace {
             []() {aoc::day_13( "Distress Signal" ); },
             []() {aoc::day_14( "Regolith Reservoir" ); },
             []() {aoc::day_15( "Beacon Exclusion Zone" ); },
-            []() {aoc::day_16( "TODO" ); },
+            []() {aoc::day_16( "Proboscidea Volcanium" ); },
             []() {aoc::day_17( "TODO" ); },
             []() {aoc::day_18( "TODO" ); },
             []() {aoc::day_19( "TODO" ); },

@@ -80,6 +80,32 @@ std::vector<std::vector<int>> aoc::strings_to_2D_array_of_digits(const std::vect
     return grid;
 }
 
+std::string aoc::remove_nonalphabetic(const std::string& str) {
+    auto s = str;
+    s.erase(std::remove_if(s.begin(), s.end(),
+        [](auto const& c) -> bool { return !std::isalpha(c); }), s.end());
+    return s;
+}
+
+std::string aoc::remove_nonnumeric(const std::string& str) {
+    auto s = str;
+    s.erase(std::remove_if(s.begin(), s.end(),
+        [](auto const& c) -> bool { return !std::isdigit(c); }), s.end());
+    return s;
+}
+
+std::vector<std::string> aoc::extract_alphabetic(const std::string & str) {
+    auto just_letters = aoc::collapse_whitespace(
+        str |
+        rv::transform(
+            [](char ch)->char {
+                return (std::isalpha(ch)) ? ch : ' ';
+            }
+        ) | r::to<std::string>()
+    );
+    return split(just_letters, ' ');
+}
+
 std::vector<int> aoc::extract_numbers(const std::string& str, bool allow_negatives) {
     std::function<bool(char)> is_digit = (allow_negatives) ?
         [](char ch)->bool {return std::isdigit(ch); } :
