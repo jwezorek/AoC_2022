@@ -85,33 +85,6 @@ namespace {
             );
     }
 
-    bool is_point_on_line_segment(const line_segment& line, const point& pt) {
-        int64_t cx = pt.x;
-        int64_t cy = pt.y;
-        const auto& [a, b] = line;
-        int64_t ax = a.x;
-        int64_t ay = a.y;
-        int64_t bx = b.x;
-        int64_t by = b.y;
-
-        auto crossproduct = (cy - ay) * (bx - ax) - (cx - ax) * (by - ay);
-        
-        if (std::abs(crossproduct) > 0) {
-            return false;
-        }
-
-        auto dotproduct = (cx - ax) * (bx - ax) + (cy - ay) * (by - ay);
-        if (dotproduct < 0) {
-            return false;
-        }
-        auto squaredlengthba = (bx - ax) * (bx - ax) + (by - ay) * (by - ay);
-        if (dotproduct > squaredlengthba) {
-            return false;
-        }
-
-        return true;
-    }
-
     std::optional<point> line_segment_intersection(const line_segment& a, const line_segment& b) {
         const auto& [a1, a2] = a;
         const auto& [b1, b2] = b;
@@ -131,6 +104,7 @@ namespace {
         }
 
         int64_t t_numer = (x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4);
+        int64_t u_numer = (x1 - x3) * (y1 - y2) - (y1 - y3) * (x1 - x2);
         int64_t x_diff_scaled = t_numer * (x2 - x1);
         int64_t y_diff_scaled = t_numer * (y2 - y1);
 
@@ -138,9 +112,9 @@ namespace {
             return {};
         }
 
-        // the if the numerator is greater than the denominator then
-        // the intersection is not within the line segment.
-        if (abs(t_numer) > std::abs(denom)) {
+        // the if either numerator is greater than the denominator then
+        // the intersection is not within one of the line segments.
+        if (std::abs(t_numer) > std::abs(denom) || std::abs(u_numer) > std::abs(denom)) {
             return {};
         }
 
@@ -148,11 +122,6 @@ namespace {
             static_cast<int>(x1 + x_diff_scaled / denom),
             static_cast<int>(y1 + x_diff_scaled / denom)
         };
-
-        if (!is_point_on_line_segment(a, intersection) ||
-             !is_point_on_line_segment(b, intersection)) {
-            return {};
-        }
 
         return intersection;
     };
