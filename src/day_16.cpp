@@ -189,19 +189,6 @@ namespace {
         }
     };
 
-    struct state_hasher {
-        size_t operator()(const traversal_state& s) const {
-            size_t seed = 0;
-            boost::hash_combine(seed, s.open_valves);
-            boost::hash_combine(seed, s.location);
-            boost::hash_combine(seed, s.minutes_elapsed);
-            boost::hash_combine(seed, s.total_flow);
-            return seed;
-        }
-    };
-
-    using state_set = std::unordered_set<traversal_state, state_hasher>;
-
     std::vector<edge> neighbors(const graph& g, const traversal_state& state, 
             const std::vector<bool>& mask, int max_time) {
         auto u = state.location;
@@ -251,7 +238,6 @@ namespace {
 
     int do_traversal(const graph& g, const std::vector<bool>& mask, int max_time) {
         std::stack<traversal_stack_item> stack;
-        state_set ss;
         traversal_state state{
             .open_valves = 0,
             .location = g.start,
