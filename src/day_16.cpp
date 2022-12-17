@@ -202,12 +202,16 @@ namespace {
 
     using state_set = std::unordered_set<traversal_state, state_hasher>;
 
-    std::vector<edge> neighbors(const graph& g, const traversal_state& state, int max_time) {
+    std::vector<edge> neighbors(const graph& g, const traversal_state& state, 
+            const std::vector<bool>& mask, int max_time) {
         auto u = state.location;
         return g.verts[u].neighbors |
             rv::remove_if(
                 [&](auto&& e)->bool {
                     int v = e.dest;
+                    if (!mask[v]) {
+                        return true;
+                    }
                     if (g.verts[v].flow == 0) {
                         return true;
                     }
@@ -229,7 +233,6 @@ namespace {
                 total_flow += v.flow;
             }
         }
-        //std::cout << "total flow: " << total_flow << "\n";
         return total_flow;
     }
 
@@ -246,7 +249,7 @@ namespace {
 
     using traversal_stack_item = std::tuple<traversal_state, edge>;
 
-    int do_traversal(const graph& g, int max_time) {
+    int do_traversal(const graph& g, const std::vector<bool>& mask, int max_time) {
         std::stack<traversal_stack_item> stack;
         state_set ss;
         traversal_state state{
@@ -255,7 +258,7 @@ namespace {
             .minutes_elapsed = 0,
             .total_flow = 0
         };
-        for (auto&& e : neighbors(g, state, max_time)) {
+        for (auto&& e : neighbors(g, state, mask, max_time)) {
             stack.push({ state, e });
         }
         int max_flow = 0;
@@ -266,12 +269,11 @@ namespace {
             auto new_state = make_move(g, state, e);
 
             if (new_state.minutes_elapsed == max_time) {
-                //std::cout << "foo:" << new_state.minutes_elapsed << "\n";
                 max_flow = std::max(max_flow, new_state.total_flow);
                 continue;
             }
 
-            auto neigh = neighbors(g, new_state, max_time);
+            auto neigh = neighbors(g, new_state, mask, max_time);
             if (neigh.empty()) {
                 auto flow = new_state.total_flow + (max_time - new_state.minutes_elapsed) * current_flow(g, new_state);
                 max_flow = std::max(max_flow, flow);
@@ -285,46 +287,59 @@ namespace {
     }
 
     using traversal_stack_item_with_elphant = std::tuple<traversal_state, edge, edge>;
-    /*
+
+    std::vector<bool> get_mask(uint64_t bits, int start, int n) {
+        std::vector<bool> mask(n, false);
+        int j = 0;
+        mask[start] = true;
+        for (int i = 0; i < n - 1; ++i) {
+            if (i == start) {
+                ++j;
+                continue;
+            }
+            mask[j++] = (static_cast<uint64_t>(1) << i) & bits;
+        }
+        return mask;
+    }
+
+    int count_on_verts(const std::vector<bool>& mask) {
+        return r::accumulate(
+            mask | rv::transform([](bool v) {return v ? 1 : 0; }),
+            0
+        );
+    }
+
+    std::vector<bool> invert_mask(const std::vector<bool>& mask, int start) {
+        auto inverted = mask | rv::transform([](bool v) {return !v; }) | r::to_vector;
+        inverted[start] = true;
+        return inverted;
+    }
+    
     int do_traversal_with_elephant(const graph& g, int max_time) {
-        std::stack<traversal_stack_item_with_elphant> stack;
-        state_set ss;
-        traversal_state state{
-            .open_valves = 0,
-            .location = g.start,
-            .elephant_location = g.start,
-            .minutes_elapsed = 0,
-            .total_flow = 0
-        };
-        for (auto&& e : neighbors(g, state, max_time)) {
-            stack.push({ state, e });
-        }
+        int n = static_cast<int>(g.verts.size());
+        uint64_t bit_mask = 0;
+        uint64_t full_mask = (static_cast<uint64_t>(1) << (n - 1)) - 1;
+
         int max_flow = 0;
-        while (!stack.empty()) {
-            auto [state, e] = stack.top();
-            stack.pop();
-            //std::cout << stack.size() << " : " << max_flow << " " << state.minutes_elapsed << " " << state.open_valves << " " << state.location << "\n";
-            auto new_state = make_move(g, state, e);
-
-            if (new_state.minutes_elapsed == max_time) {
-                //std::cout << "foo:" << new_state.minutes_elapsed << "\n";
-                max_flow = std::max(max_flow, new_state.total_flow);
+        for (uint64_t bits = 1; bits < full_mask; ++bits) {
+            //std::cout << bits << " : " << max_flow << "\n";
+            auto mask = get_mask(bits, g.start, n);
+            if (count_on_verts(mask) < 4) {
                 continue;
             }
-
-            auto neigh = neighbors(g, new_state, max_time);
-            if (neigh.empty()) {
-                auto flow = new_state.total_flow + (max_time - new_state.minutes_elapsed) * current_flow(g, new_state);
-                max_flow = std::max(max_flow, flow);
-                continue;
-            }
-            for (auto&& m : neigh) {
-                stack.push({ new_state, m });
-            }
+            auto mask2 = invert_mask(mask, g.start);
+            auto flow1 = do_traversal(g, mask, max_time);
+            auto flow2 = do_traversal(g, mask2, max_time);
+            auto flow = flow1 + flow2;
+            max_flow = std::max(max_flow, flow);
         }
+
         return max_flow;
     }
-    */
+
+    std::vector<bool> empty_mask(const graph& g) {
+        return std::vector<bool>(g.verts.size(), true);
+    }
 }
 
 /*------------------------------------------------------------------------------------------------*/
@@ -337,6 +352,6 @@ void aoc::day_16(const std::string& title) {
     g = build_weighted_graph(g, tbl);
 
     std::cout << header(16, title);
-    std::cout << "  part 1: " << do_traversal(g, 30) << "\n";
-    std::cout << "  part 2: " << 0 << "\n";
+    std::cout << "  part 1: " << do_traversal(g, empty_mask(g), 30) << "\n";
+    std::cout << "  part 2: " << do_traversal_with_elephant(g, 26) << "\n";
 }
