@@ -127,22 +127,62 @@ namespace {
         }
     };
 
-    const std::vector<shape> shapes = {
-        shape({{0,0},{1,0},{2,0},{3,0}}),       // -
-        shape({{0,1},{1,0},{1,1},{1,2},{2,1}}), // +
-        shape({{0,0},{1,0},{2,0},{2,1},{2,2}}), // _|
-        shape({{0,0},{0,1},{0,2},{0,3}}),       // |
-        shape({{0,0},{1,0},{1,1},{0,1}})        // #
+    class horz_move_stream {
+        std::vector<int> impl_;
+        int i;
+    public:
+        horz_move_stream(const std::string& inp) :
+            i(0),
+            impl_(inp | rv::transform([](char ch) {return ch == '<' ? -1 : 1; }) | r::to_vector)
+        {}
+
+        int operator++(int) {
+            auto val = impl_[i];
+            i = (i + 1) % static_cast<int>(impl_.size());
+            return val;
+        }
+
+        int state() const {
+            return i;
+        }
     };
 
-    using horz_offsets = r::any_view<int>;
+    class shape_stream {
+        const std::vector<shape> shapes_;
+        int i;
+    public:
+        shape_stream() :
+            shapes_( std::vector<shape> {
+                shape({{0,0},{1,0},{2,0},{3,0}}),       // -
+                shape({{0,1},{1,0},{1,1},{1,2},{2,1}}), // +
+                shape({{0,0},{1,0},{2,0},{2,1},{2,2}}), // _|
+                shape({{0,0},{0,1},{0,2},{0,3}}),       // |
+                shape({{0,0},{1,0},{1,1},{0,1}})        // #
+            }),
+            i(0)
+        {}
+
+        const shape& operator++(int) {
+            const auto& val = shapes_[i];
+            i = (i + 1) % static_cast<int>(shapes_.size());
+            return val;
+        }
+
+        const shape& operator*() {
+            return shapes_[i];
+        }
+
+        int state() const {
+            return i;
+        }
+    };
 
     class well {
         std::vector<uint8_t> impl_;
 
-        bool drop_shape_one_unit(const shape& shape, point& loc, auto& horz_stream) {
+        bool drop_shape_one_unit(const shape& shape , horz_move_stream& horz_moves, point& loc) {
             // do horz motion
-            auto horz = *(horz_stream++);
+            auto horz = horz_moves++;
             if (horz < 0) {
                 if (is_empty_set(shape.left(loc))) {
                     loc.x--;
@@ -203,13 +243,14 @@ namespace {
             return true;
         }
 
-        void drop_shape(const shape& shape, auto& horz_stream) {
+        void drop_shape(shape_stream& shapes, horz_move_stream& horz_moves) {
             bool in_motion = true;
             point loc = { 2, height() + 3 };
+            const auto& shape = shapes++;
             do {
-                in_motion = drop_shape_one_unit(shape, loc, horz_stream);
+                in_motion = drop_shape_one_unit(shape, horz_moves, loc);
             } while (in_motion);
-            lock_in_shape(shape, loc);
+            lock_in_shape( shape, loc);
         }
 
         std::string paint() const {
@@ -224,30 +265,25 @@ namespace {
                         }
                         return row;
                     }
-                );
+            );
             std::stringstream ss;
             for (auto&& row : rows) {
                 ss << row << "\n";
             }
             return ss.str();
         }
-        
+
     };
 
 }
 
 void aoc::day_17(const std::string& title) {
     auto input = file_to_string(input_path(17, 1));
-    auto horz_moves = input | rv::take(input.size()-1) |
-        rv::transform([](char ch) {return ch == '<' ? -1 : 1; }) | r::to_vector;
-
-    auto horz = horz_moves | r::to_vector;
-    auto horz_stream = horz_moves | rv::cycle;
-    auto horz_iter = horz_stream.begin();
+    horz_move_stream horz_moves(input | rv::take(input.size() - 1) | r::to<std::string>);
+    shape_stream shapes;
     well w;
     for (int i = 0; i < 2022; ++i) {
-        int shape_index = i % shapes.size();
-        w.drop_shape(shapes[shape_index], horz_iter);
+        w.drop_shape(shapes, horz_moves);
     }
     //std::cout << w.paint() << "\n\n";
     std::cout << header(17, title);
