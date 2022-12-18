@@ -31,18 +31,6 @@ namespace {
         return  { lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z};
     }
 
-    point operator-(const point& lhs, const point& rhs) {
-        return  { lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z };
-    }
-
-    point operator*(int lhs, const point& rhs) {
-        return {
-            lhs * rhs.x,
-            lhs * rhs.y,
-            lhs * rhs.z
-        };
-    }
-
     struct point_hash {
         size_t operator()(const point& pt) const {
             size_t seed = 0;
@@ -72,8 +60,8 @@ namespace {
     const std::array<point, 6> k_adjacencies = { {
         {0,1,0},  // north
         {1,0,0},  // east
-        {0,-1,0}, // west
-        {-1,0,0}, // south
+        {0,-1,0}, // south
+        {-1,0,0}, // west
         {0,0,1},  // up
         {0,0,-1}, // down
     } };
@@ -127,7 +115,7 @@ namespace {
     cuboid inflate(const cuboid& c) {
         const auto& [min, max] = c;
         return {
-            min - point{1,1,1},
+            min + point{-1,-1,-1},
             max + point{1,1,1}
         };
     }
@@ -153,14 +141,12 @@ namespace {
                 continue;
             }
             visited.insert(pt);
-            for (const auto& adjacency : k_adjacencies) {
-                auto neighbor = pt + adjacency;
-                if (!in_cuboid(bounds, neighbor)) {
-                    continue;
-                }
-                if (region.contains(neighbor)) {
-                    continue;
-                }
+
+            auto neighbors = k_adjacencies |
+                rv::transform([&](auto&& adj) {return  pt + adj; }) |
+                rv::remove_if([&](auto&& v) {return !in_cuboid(bounds, v) || region.contains(v); });
+
+            for (const auto& neighbor : neighbors) {
                 stack.push(neighbor);
             }
         }
