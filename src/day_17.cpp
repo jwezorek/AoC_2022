@@ -129,29 +129,29 @@ namespace {
 
     class horz_move_stream {
         std::vector<int> impl_;
-        int i;
+        int iter;
     public:
-        horz_move_stream(const std::string& inp) :
-            i(0),
+        horz_move_stream(const std::string& inp, int i = 0) :
+            iter(i),
             impl_(inp | rv::transform([](char ch) {return ch == '<' ? -1 : 1; }) | r::to_vector)
         {}
 
         int operator++(int) {
-            auto val = impl_[i];
-            i = (i + 1) % static_cast<int>(impl_.size());
+            auto val = impl_[iter];
+            iter = (iter + 1) % static_cast<int>(impl_.size());
             return val;
         }
 
         int state() const {
-            return i;
+            return iter;
         }
     };
 
     class shape_stream {
         const std::vector<shape> shapes_;
-        int i;
+        int iter;
     public:
-        shape_stream() :
+        shape_stream(int i = 0) :
             shapes_( std::vector<shape> {
                 shape({{0,0},{1,0},{2,0},{3,0}}),       // -
                 shape({{0,1},{1,0},{1,1},{1,2},{2,1}}), // +
@@ -159,23 +159,25 @@ namespace {
                 shape({{0,0},{0,1},{0,2},{0,3}}),       // |
                 shape({{0,0},{1,0},{1,1},{0,1}})        // #
             }),
-            i(0)
+            iter(i)
         {}
 
         const shape& operator++(int) {
-            const auto& val = shapes_[i];
-            i = (i + 1) % static_cast<int>(shapes_.size());
+            const auto& val = shapes_[iter];
+            iter = (iter + 1) % static_cast<int>(shapes_.size());
             return val;
         }
 
         const shape& operator*() {
-            return shapes_[i];
+            return shapes_[iter];
         }
 
         int state() const {
-            return i;
+            return iter;
         }
     };
+
+    std::vector<int> distances;
 
     class well {
         std::vector<uint8_t> impl_;
@@ -219,6 +221,10 @@ namespace {
     public:
         int height() const {
             return static_cast<int>(impl_.size());
+        }
+
+        uint8_t top() const {
+            return impl_.back();
         }
 
         bool is_empty(const point& pt) const {
@@ -272,22 +278,59 @@ namespace {
             }
             return ss.str();
         }
-
     };
 
+    std::tuple<well, int, int> well_after_n_drops(const std::string& input, int n) {
+        horz_move_stream horz_moves(input);
+        shape_stream shapes;
+        ::well well;
+        for (int i = 0; i < n; ++i) {
+            well.drop_shape(shapes, horz_moves);
+        }
+        return { std::move(well), shapes.state(), horz_moves.state() };
+    }
+
+    int height_after_n_drops(const std::string& input, int n) {
+        auto [well, dummy1, dummy2] = well_after_n_drops(input, n);
+        return well.height();
+    }
+
+    std::vector<int> make_cycle_table(const std::string& input, uint64_t drops_preamble, uint64_t drops_cycle) {
+        auto [well, shape_iter, move_iter] = well_after_n_drops(input, static_cast<int>(drops_preamble));
+        int base_height = well.height();
+        std::vector<int> tbl(drops_cycle);
+        horz_move_stream horz_moves(input, move_iter);
+        shape_stream shapes(shape_iter);
+        tbl[0] = 0;
+        for (uint64_t i = 1; i < drops_cycle; ++i) {
+            well.drop_shape(shapes, horz_moves);
+            tbl[i] = well.height() - base_height;
+        }
+        return tbl;
+    }
+
+    uint64_t calculate_height_of_n_drops_using_cycles(const std::string& input, uint64_t n) {
+        const uint64_t k_drops_preamble = 974;
+        const uint64_t k_drops_cycle = 1695;
+        const uint64_t k_hgt_preamble = 1519;
+        const uint64_t k_hgt_cycle = 2634;
+
+        uint64_t x = (n - k_drops_preamble) / k_drops_cycle;
+        uint64_t slop = (n - k_drops_preamble) % k_drops_cycle;
+
+        const static auto tbl = make_cycle_table(input, k_drops_preamble, k_drops_cycle);
+
+        return k_hgt_preamble + x * k_hgt_cycle + tbl[slop];
+    }
 }
 
 void aoc::day_17(const std::string& title) {
     auto input = file_to_string(input_path(17, 1));
-    horz_move_stream horz_moves(input | rv::take(input.size() - 1) | r::to<std::string>);
-    shape_stream shapes;
-    well w;
-    for (int i = 0; i < 2022; ++i) {
-        w.drop_shape(shapes, horz_moves);
-    }
-    //std::cout << w.paint() << "\n\n";
+    input = input | rv::take(input.size() - 1) | r::to<std::string>;
     std::cout << header(17, title);
-    
-    std::cout << "  part 1: " << w.height() << "\n";
-    std::cout << "  part 2: " << 0 << "\n";
+
+    std::cout << "  part 1: " << height_after_n_drops(input, 2022) << "\n";
+    std::cout << "  part 2: " << calculate_height_of_n_drops_using_cycles(input, 1000000000000) << "\n";
+
 }
+
