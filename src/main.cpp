@@ -27,7 +27,7 @@ namespace {
             []() {aoc::day_15( "Beacon Exclusion Zone" ); },
             []() {aoc::day_16( "Proboscidea Volcanium" ); },
             []() {aoc::day_17( "Pyroclastic Flow" ); },
-            []() {aoc::day_18( "TODO" ); },
+            []() {aoc::day_18( "Boiling Boulders" ); },
             []() {aoc::day_19( "TODO" ); },
             []() {aoc::day_20( "TODO" ); },
             []() {aoc::day_21( "TODO" ); },
