@@ -138,7 +138,7 @@ namespace {
     using horz_offsets = r::any_view<int>;
 
     class well {
-        std::vector<std::array<bool, 7>> impl_;
+        std::vector<uint8_t> impl_;
 
         bool drop_shape_one_unit(const shape& shape, point& loc, auto& horz_stream) {
             // do horz motion
@@ -161,10 +161,8 @@ namespace {
         }
 
         void extend_height(int amt) {
-            std::array<bool, 7> empty_row;
-            r::fill(empty_row, false);
             for (int i = 0; i < amt; ++i) {
-                impl_.push_back(empty_row);
+                impl_.push_back(0);
             }
         }
 
@@ -174,7 +172,7 @@ namespace {
                 extend_height(top - height());
             }
             for (auto&& pt : shape(loc)) {
-                impl_[pt.y][pt.x] = true;
+                impl_[pt.y] = impl_[pt.y] | (static_cast<uint8_t>(1) << pt.x);
             }
         }
 
@@ -193,7 +191,7 @@ namespace {
             if (pt.y >= height()) {
                 return true;
             }
-            return !impl_[pt.y][pt.x];
+            return !(impl_[pt.y] & (static_cast<uint8_t>(1) << pt.x));
         }
 
         bool is_empty_set(auto pts) const {
@@ -217,10 +215,14 @@ namespace {
         std::string paint() const {
             auto rows = rv::reverse(impl_) |
                 rv::transform(
-                    [](auto&& ary)->std::string {
-                        return ary | rv::transform(
-                            [](bool v) {return v ? '#' : '.'; }
-                        ) | r::to<std::string>();
+                    [](uint8_t row_byte)->std::string {
+                        std::string row = ".......";
+                        for (int x = 0; x < 7; ++x) {
+                            if (row_byte & (static_cast<uint8_t>(1) << x)) {
+                                row[x] = '#';
+                            }
+                        }
+                        return row;
                     }
                 );
             std::stringstream ss;
@@ -246,9 +248,8 @@ void aoc::day_17(const std::string& title) {
     for (int i = 0; i < 2022; ++i) {
         int shape_index = i % shapes.size();
         w.drop_shape(shapes[shape_index], horz_iter);
-       // std::cout << w.paint() << "\n\n";
     }
-    std::cout << w.paint() << "\n\n";
+    //std::cout << w.paint() << "\n\n";
     std::cout << header(17, title);
     
     std::cout << "  part 1: " << w.height() << "\n";
