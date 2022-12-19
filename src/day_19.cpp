@@ -38,7 +38,7 @@ namespace {
         resource output;
     };
 
-    using amount_t = int;
+    using amount_t = uint8_t;
     using resource_ary = std::array<amount_t, 4>;
 
     bool can_be_built(const ::robot& robot, const resource_ary& available_resources) {
@@ -83,20 +83,20 @@ namespace {
             r::to_vector;
     }
 
-    struct robot_state {
-        int time;
+    struct search_state {
+        int minute;
         resource_ary num_robots;
         resource_ary rsrc_amounts;
         std::optional<resource> robot_in_production;
 
-        robot_state() :
-            time(0),
+        search_state() :
+            minute(0),
             num_robots({ {1,0,0,0} }),
             rsrc_amounts({ {0,0,0,0} })
         {}
 
-        bool operator==(const robot_state& state) const {
-            if (time != state.time) {
+        bool operator==(const search_state& state) const {
+            if (minute != state.minute) {
                 return false;
             }
             for (int i = 0; i < 4; ++i) {
@@ -112,9 +112,9 @@ namespace {
     };
 
     struct state_hash {
-        size_t operator()(const robot_state& state) const {
+        size_t operator()(const search_state& state) const {
             size_t seed = 0;
-            boost::hash_combine(seed, state.time);
+            boost::hash_combine(seed, state.minute);
             for (int i = 0; i < 4; ++i) {
                 boost::hash_combine(seed, state.num_robots[i]);
                 boost::hash_combine(seed, state.rsrc_amounts[i]);
@@ -123,7 +123,7 @@ namespace {
         }
     };
 
-    using state_set = std::unordered_set<robot_state, state_hash>;
+    using state_set = std::unordered_set<search_state, state_hash>;
 
     using allocation = std::optional<resource>;
 
@@ -136,7 +136,7 @@ namespace {
         );
     }
 
-    std::vector<allocation> possible_actions(const blueprint& bp, const robot_state& state) {
+    std::vector<allocation> possible_actions(const blueprint& bp, const search_state& state) {
         std::vector<allocation> allocations = { allocation{} };
         for (auto robot_type : resources()) {
             if (can_be_built(bp.robots[robot_type], state.rsrc_amounts)) {
@@ -146,11 +146,11 @@ namespace {
         return allocations;
     }
 
-    robot_state perform_allocation(const blueprint& bp, const robot_state& state, allocation a) {
+    search_state perform_allocation(const blueprint& bp, const search_state& state, allocation a) {
         if (!a.has_value()) {
             return state;
         }
-        robot_state new_state = state;
+        search_state new_state = state;
         auto new_robot_type = a.value();
         new_state.robot_in_production = new_robot_type;
         pay_for_robot(bp.robots[new_robot_type], new_state.rsrc_amounts);
@@ -158,7 +158,7 @@ namespace {
         return new_state;
     }
 
-    void do_production(robot_state& state) {
+    void do_production(search_state& state) {
         for (auto rsrc : resources()) {
             state.rsrc_amounts[rsrc] += state.num_robots[rsrc];
         }
@@ -169,41 +169,37 @@ namespace {
         }
     }
 
-    std::string to_string(const robot_state& rs) {
-        std::stringstream ss;
-    }
-
     int maximize_geodes(const blueprint& bp, int duration) {
-        std::stack<robot_state> stack;
+        std::stack<search_state> stack;
         stack.push({});
 
         state_set states_seen;
-        std::vector<amount_t> max_geodes_per_day(duration, 0);
+        std::vector<amount_t> max_geodes_per_minute(duration, 0);
         while (!stack.empty()) {
             auto state = stack.top();
             stack.pop();
 
-            if (state.time > 0) {
+            if (state.minute > 0) {
                 if (states_seen.contains(state)) {
                     continue;
                 }
                 states_seen.insert(state);
 
-                if (state.rsrc_amounts[geode] < max_geodes_per_day[state.time - 1] - 1) {
+                if (state.rsrc_amounts[geode] < max_geodes_per_minute[state.minute - 1] - 1) {
                     continue;
                 }
-                max_geodes_per_day[state.time - 1] = std::max(state.rsrc_amounts[geode], max_geodes_per_day[state.time - 1]);
-                if (state.time == duration) {
+                max_geodes_per_minute[state.minute - 1] = std::max(state.rsrc_amounts[geode], max_geodes_per_minute[state.minute - 1]);
+                if (state.minute == duration) {
                     continue;
                 }
             }
 
             std::vector<allocation> actions = possible_actions(bp, state);
             auto next_states = actions | rv::transform(
-                [&bp, &state](auto&& a)->robot_state {
+                [&bp, &state](auto&& a)->search_state {
                     auto allocated = perform_allocation(bp, state, a);
                     do_production(allocated);
-                    allocated.time++;
+                    allocated.minute++;
 
                     return allocated;
                 }
@@ -213,23 +209,23 @@ namespace {
             }
         }
 
-        return max_geodes_per_day[duration - 1];
+        return max_geodes_per_minute[duration - 1];
     }
 
-    int sum_of_quality_level(const std::vector<blueprint>& blueprints, int time) {
+    int sum_of_quality_level(const std::vector<blueprint>& blueprints, int minute) {
         int sum = 0;
         int i = 0;
         for (const auto& blueprint : blueprints) {
-            int geodes = maximize_geodes(blueprint, time);
+            int geodes = maximize_geodes(blueprint, minute);
             sum += blueprint.id * geodes;
         }
         return sum;
     }
 
-    int product_of_max_geodes(const std::array<blueprint, 3> blueprints, int time) {
-        return maximize_geodes(blueprints[0], time) *
-            maximize_geodes(blueprints[1], time) *
-            maximize_geodes(blueprints[2], time);
+    int product_of_max_geodes(const std::array<blueprint, 3> blueprints, int minute) {
+        return maximize_geodes(blueprints[0], minute) *
+            maximize_geodes(blueprints[1], minute) *
+            maximize_geodes(blueprints[2], minute);
     }
 }
 
