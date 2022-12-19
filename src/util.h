@@ -15,4 +15,5 @@ namespace aoc {
     std::vector<std::string> extract_alphabetic(const std::string& str);
     std::string remove_nonalphabetic(const std::string& str);
     std::string remove_nonnumeric(const std::string& str);
+    std::string trim(const std::string& str);
 }

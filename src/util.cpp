@@ -11,7 +11,18 @@ namespace rv = ranges::views;
 /*------------------------------------------------------------------------------------------------*/
 
 namespace {
-    
+    void ltrim(std::string& s) {
+        s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
+            return !std::isspace(ch);
+            }));
+    }
+
+    // trim from end (in place)
+    void rtrim(std::string& s) {
+        s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
+            return !std::isspace(ch);
+            }).base(), s.end());
+    }
 }
 
 std::vector<std::string> aoc::file_to_string_vector(const std::string& filename) {
@@ -29,17 +40,24 @@ std::vector<std::string> aoc::file_to_string_vector(const std::string& filename)
     return v;
 }
 
+std::string aoc::trim(const std::string& str) {
+    auto trimmed = str;
+    ltrim(trimmed);
+    rtrim(trimmed);
+    return trimmed;
+}
+
 std::string aoc::collapse_whitespace(const std::string& str){ 
     std::stringstream ss;
     for (auto i = str.begin(); i != str.end(); ++i) {
         ss << *i;
         if (std::isspace(*i)) {
-            while (std::isspace(*(i+1))) {
+            while (i+1 != str.end() && std::isspace(*(i+1))) {
                 ++i;
             }
         }
     }
-    return ss.str();
+    return trim(ss.str());
 }
 
 bool aoc::is_number(const std::string& s) {
