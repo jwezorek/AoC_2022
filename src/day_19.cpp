@@ -64,6 +64,13 @@ namespace {
     struct blueprint {
         int id;
         std::array<robot,4> robots;
+
+        int max_cost_in_ore() const {
+            return r::max(
+                robots |
+                rv::transform([](auto&& r) {return r.ore_cost; })
+            );
+        }
     };
 
     blueprint string_to_blueprint(const std::string& str) {
@@ -140,6 +147,9 @@ namespace {
         std::vector<allocation> allocations = { allocation{} };
         for (auto robot_type : resources()) {
             if (can_be_built(bp.robots[robot_type], state.rsrc_amounts)) {
+                if (robot_type == ore && state.num_robots[ore] > bp.max_cost_in_ore()) {
+                    continue;
+                }
                 allocations.push_back({ robot_type });
             }
         }
