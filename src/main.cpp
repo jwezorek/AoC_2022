@@ -29,7 +29,7 @@ namespace {
             []() {aoc::day_17( "Pyroclastic Flow" ); },
             []() {aoc::day_18( "Boiling Boulders" ); },
             []() {aoc::day_19( "Not Enough Minerals" ); },
-            []() {aoc::day_20( "TODO" ); },
+            []() {aoc::day_20( "Grove Positioning System" ); },
             []() {aoc::day_21( "TODO" ); },
             []() {aoc::day_22( "TODO" ); },
             []() {aoc::day_23( "TODO" ); },
