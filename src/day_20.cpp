@@ -21,9 +21,9 @@ namespace {
 
     struct circular_list_node_traits
     {
-        typedef circular_list_node node;
-        typedef circular_list_node* node_ptr;
-        typedef const circular_list_node* const_node_ptr;
+        using node = circular_list_node;
+        using node_ptr = circular_list_node*;
+        using const_node_ptr = const circular_list_node*;
         static node_ptr get_next(const_node_ptr n) { return n->next_; }
         static void set_next(node_ptr n, node_ptr next) { n->next_ = next; }
         static node* get_previous(const_node_ptr n) { return n->prev_; }
