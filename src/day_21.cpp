@@ -138,14 +138,10 @@ namespace {
         auto arg_value = *evaluate_variable(defs, arg_var);
         std::string key = std::string(1, expr.op) + ((unknown_on_left) ? "L" : "R");
         std::unordered_map<std::string, binary_expression> inverse_op = {
-            {"-L", binary_expression{ '+', old_var, arg_var} },
-            {"-R", binary_expression{ '-', arg_var, old_var} },
-            {"/L", binary_expression{ '*', old_var, arg_var} },
-            {"/R", binary_expression{ '/', arg_var, old_var} },
-            {"+L", binary_expression{ '-', old_var, arg_var} },
-            {"+R", binary_expression{ '-', old_var, arg_var} },
-            {"*L", binary_expression{ '/', old_var, arg_var} },
-            {"*R", binary_expression{ '/', old_var, arg_var} }
+            {"-L", { '+', old_var, arg_var} } , {"+L", { '-', old_var, arg_var} },
+            {"-R", { '-', arg_var, old_var} } , {"+R", { '-', old_var, arg_var} },
+            {"/L", { '*', old_var, arg_var} } , {"*L", { '/', old_var, arg_var} },
+            {"/R", { '/', arg_var, old_var} } , {"*R", { '/', old_var, arg_var} }
         };
         const auto [new_op, new_lhs, new_rhs] = inverse_op.at(key);
         return {
