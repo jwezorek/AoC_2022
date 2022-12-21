@@ -45,8 +45,8 @@ namespace {
         return { var, {binary_expression{op[0], lhs, rhs}} };
     }
 
-    using eval_stack_item = std::variant<int64_t, char, std::string>;
-    using binary_op = std::function < int64_t(int64_t, int64_t)>;
+    using eval_stack_item = std::variant<char, std::string>;
+    using binary_op = std::function<int64_t(int64_t, int64_t)>;
 
     using var_def_tbl = std::unordered_map<std::string, expression>;
     std::optional<int64_t> maybe_evaluate_variable(const var_def_tbl& defs, const std::string& var){
@@ -60,7 +60,7 @@ namespace {
         std::stack<int64_t> arg_stack;
         std::stack<eval_stack_item> eval_stack;
         eval_stack.push({ var });
-        while (eval_stack.size() > 1 || !std::holds_alternative<int64_t>(eval_stack.top())) {
+        while (!eval_stack.empty()) {
             auto item = eval_stack.top();
             eval_stack.pop();
             if (std::holds_alternative<std::string>(item)) {
@@ -70,16 +70,13 @@ namespace {
             }
             std::visit(
                 overloaded{
-                    [&](int64_t num) { 
-                        arg_stack.push(num); 
-                    },
                     [&](char op) {
                         auto func = op_tbl.at(op);
                         auto arg1 = arg_stack.top();
                         arg_stack.pop();
                         auto arg2 = arg_stack.top();
                         arg_stack.pop();
-                        eval_stack.push(func(arg1,arg2));
+                        arg_stack.push(func(arg1,arg2));
                     },
                     [&](const std::string& var) {
                         if (!defs.contains(var)) {
@@ -87,7 +84,7 @@ namespace {
                         }
                         auto val = defs.at(var);
                         if (std::holds_alternative<int64_t>(val)) {
-                            eval_stack.push(std::get<int64_t>(val));
+                            arg_stack.push(std::get<int64_t>(val));
                         } else {
                             auto expr = std::get<binary_expression>(val);
                             eval_stack.push(expr.op);
@@ -99,7 +96,7 @@ namespace {
                 item
             );
         }
-        return std::get<int64_t>(eval_stack.top());
+        return arg_stack.top();
     }
 
     int64_t evaluate_variable(const var_def_tbl& defs, const std::string& var) {
