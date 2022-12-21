@@ -15,14 +15,6 @@ namespace rv = ranges::views;
 
 namespace {
 
-    template <class... Ts>
-    struct overloaded : Ts... {
-        using Ts::operator()...;
-    };
-
-    template <class... Ts>
-    overloaded(Ts...)->overloaded<Ts...>;
-
     struct binary_expression {
         char op;
         std::string lhs;
@@ -45,10 +37,9 @@ namespace {
         return { var, {binary_expression{op[0], lhs, rhs}} };
     }
 
-    using eval_stack_item = std::variant<char, std::string>;
     using binary_op = std::function<int64_t(int64_t, int64_t)>;
-
     using var_def_tbl = std::unordered_map<std::string, expression>;
+
     std::optional<int64_t> maybe_evaluate_variable(const var_def_tbl& defs, const std::string& var){
         const static std::unordered_map<char, binary_op> op_tbl = {
             {'+', [](int64_t lhs, int64_t rhs)->int64_t { return lhs + rhs; }},
@@ -56,45 +47,35 @@ namespace {
             {'*', [](int64_t lhs, int64_t rhs)->int64_t { return lhs * rhs; }},
             {'/', [](int64_t lhs, int64_t rhs)->int64_t { return lhs / rhs; }}
         };
-
         std::stack<int64_t> arg_stack;
-        std::stack<eval_stack_item> eval_stack;
+        std::stack<std::string> eval_stack;
         eval_stack.push({ var });
         while (!eval_stack.empty()) {
             auto item = eval_stack.top();
             eval_stack.pop();
-            if (std::holds_alternative<std::string>(item)) {
-                if (std::get<std::string>(item) == "<unknown-var>") {
+            if (item.size() == 1) {
+                auto op = item.front();
+                auto func = op_tbl.at(op);
+                auto arg1 = arg_stack.top();
+                arg_stack.pop();
+                auto arg2 = arg_stack.top();
+                arg_stack.pop();
+                arg_stack.push(func(arg1, arg2));
+            } else {
+                auto var = item;
+                if (!defs.contains(var)) {
                     return {};
                 }
+                auto val = defs.at(var);
+                if (std::holds_alternative<int64_t>(val)) {
+                    arg_stack.push(std::get<int64_t>(val));
+                } else {
+                    auto expr = std::get<binary_expression>(val);
+                    eval_stack.push(std::string(1,expr.op));
+                    eval_stack.push(expr.lhs);
+                    eval_stack.push(expr.rhs);
+                }
             }
-            std::visit(
-                overloaded{
-                    [&](char op) {
-                        auto func = op_tbl.at(op);
-                        auto arg1 = arg_stack.top();
-                        arg_stack.pop();
-                        auto arg2 = arg_stack.top();
-                        arg_stack.pop();
-                        arg_stack.push(func(arg1,arg2));
-                    },
-                    [&](const std::string& var) {
-                        if (!defs.contains(var)) {
-                            return eval_stack.push("<unknown-var>");
-                        }
-                        auto val = defs.at(var);
-                        if (std::holds_alternative<int64_t>(val)) {
-                            arg_stack.push(std::get<int64_t>(val));
-                        } else {
-                            auto expr = std::get<binary_expression>(val);
-                            eval_stack.push(expr.op);
-                            eval_stack.push(expr.lhs);
-                            eval_stack.push(expr.rhs);
-                        }
-                    }
-                },
-                item
-            );
         }
         return arg_stack.top();
     }
