@@ -54,19 +54,17 @@ namespace {
             auto item = eval_stack.top();
             eval_stack.pop();
             if (item.size() == 1) {
-                auto op = item.front();
-                auto func = op_tbl.at(op);
+                auto func = op_tbl.at(item.front());
                 auto arg1 = arg_stack.top();
                 arg_stack.pop();
                 auto arg2 = arg_stack.top();
                 arg_stack.pop();
                 arg_stack.push(func(arg1, arg2));
             } else {
-                auto var = item;
-                if (!defs.contains(var)) {
+                if (!defs.contains(item)) {
                     return {};
                 }
-                auto val = defs.at(var);
+                auto val = defs.at(item);
                 if (std::holds_alternative<int64_t>(val)) {
                     arg_stack.push(std::get<int64_t>(val));
                 } else {
@@ -122,7 +120,6 @@ namespace {
             {"/L", { '*', old_var, arg_var} } , {"*L", { '/', old_var, arg_var} },
             {"/R", { '/', arg_var, old_var} } , {"*R", { '/', old_var, arg_var} }
         };
-        const auto [new_op, new_lhs, new_rhs] = inverse_op.at(key);
         return {
             variable_def{arg_var, arg_value},
             variable_def{unknown, inverse_op.at(key) }
