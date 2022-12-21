@@ -121,10 +121,10 @@ namespace {
         return {};
     }
 
-    variable_def root_expression_part2(const var_def_tbl& definitions) {
+    variable_def root_definition(const var_def_tbl& definitions, const std::string unknown) {
         auto root_expr = std::get<binary_expression>(definitions.at("root"));
         auto defs = definitions;
-        defs.erase("humn");
+        defs.erase(unknown);
         auto lhs = maybe_evaluate_variable(defs, root_expr.lhs);
         auto rhs = maybe_evaluate_variable(defs, root_expr.rhs);
         return (lhs) ? variable_def{ root_expr.rhs, *lhs } : variable_def{ root_expr.lhs, *rhs };
@@ -154,7 +154,7 @@ namespace {
     int64_t solve_for_unknown(const var_def_tbl& defs, const std::string& unknown) {
 
         var_def_tbl solve_for_humn_tbl;
-        auto root_def = root_expression_part2(defs);
+        auto root_def = root_definition(defs, unknown);
         solve_for_humn_tbl[root_def.var] = root_def.expr;
         auto definitions = defs;
         definitions.erase("root");
