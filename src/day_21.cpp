@@ -49,7 +49,7 @@ namespace {
     using binary_op = std::function < int64_t(int64_t, int64_t)>;
 
     using var_def_tbl = std::unordered_map<std::string, expression>;
-    std::optional<int64_t> evaluate_variable(const var_def_tbl& defs, const std::string& var){
+    std::optional<int64_t> maybe_evaluate_variable(const var_def_tbl& defs, const std::string& var){
         const static std::unordered_map<char, binary_op> op_tbl = {
             {'+', [](int64_t lhs, int64_t rhs)->int64_t { return lhs + rhs; }},
             {'-', [](int64_t lhs, int64_t rhs)->int64_t { return lhs - rhs; }},
@@ -101,12 +101,13 @@ namespace {
         }
         return std::get<int64_t>(eval_stack.top());
     }
-    struct binary_expr_def {
-        std::string var;
-        binary_expression expr;
-    };
 
-    std::optional<binary_expr_def> find_unknown_expression(
+    int64_t evaluate_variable(const var_def_tbl& defs, const std::string& var) {
+        auto result = maybe_evaluate_variable(defs, var);
+        return result.value();
+    }
+
+    std::optional<variable_def> find_unknown_expression(
             const var_def_tbl& definitions, const std::string& variable) {
         for (const auto& var_def : definitions ) {
             const auto [var, expr] = var_def;
@@ -124,18 +125,18 @@ namespace {
         auto root_expr = std::get<binary_expression>(definitions.at("root"));
         auto defs = definitions;
         defs.erase("humn");
-        auto lhs = evaluate_variable(defs, root_expr.lhs);
-        auto rhs = evaluate_variable(defs, root_expr.rhs);
+        auto lhs = maybe_evaluate_variable(defs, root_expr.lhs);
+        auto rhs = maybe_evaluate_variable(defs, root_expr.rhs);
         return (lhs) ? variable_def{ root_expr.rhs, *lhs } : variable_def{ root_expr.lhs, *rhs };
     }
 
-    std::vector<variable_def> solve_for_x(const binary_expr_def& def, std::string unknown, 
+    std::vector<variable_def> solve_for_x(const variable_def& def, std::string unknown,
             const var_def_tbl& defs) {
-        const auto& expr = def.expr;
+        const auto& expr = std::get<binary_expression>(def.expr);
         bool unknown_on_left = (expr.lhs == unknown);
         auto old_var = def.var;
         auto arg_var = unknown_on_left ? expr.rhs : expr.lhs;
-        auto arg_value = *evaluate_variable(defs, arg_var);
+        auto arg_value = evaluate_variable(defs, arg_var);
         std::string key = std::string(1, expr.op) + ((unknown_on_left) ? "L" : "R");
         std::unordered_map<std::string, binary_expression> inverse_op = {
             {"-L", { '+', old_var, arg_var} } , {"+L", { '-', old_var, arg_var} },
@@ -150,7 +151,7 @@ namespace {
         };
     }
 
-    int64_t do_part_2(const var_def_tbl& defs) {
+    int64_t solve_for_unknown(const var_def_tbl& defs, const std::string& unknown) {
 
         var_def_tbl solve_for_humn_tbl;
         auto root_def = root_expression_part2(defs);
@@ -158,14 +159,10 @@ namespace {
         auto definitions = defs;
         definitions.erase("root");
         
-        std::string unknown_var = "humn";
+        std::string unknown_var = unknown;
         while (!unknown_var.empty()) {
             auto unknown_expr = find_unknown_expression(definitions, unknown_var);
             if (!unknown_expr) {
-                if (!definitions.contains(unknown_var)) {
-                    unknown_var = {};
-                    continue;
-                }
                 if (unknown_var == root_def.var) {
                     unknown_var = {};
                     continue;
@@ -182,7 +179,7 @@ namespace {
             unknown_var = var;
         }
 
-        return *evaluate_variable(solve_for_humn_tbl, "humn");
+        return evaluate_variable(solve_for_humn_tbl, unknown);
     }
 }
 
@@ -197,6 +194,6 @@ void aoc::day_21(const std::string& title) {
 
     std::cout << header(21, title);
 
-    std::cout << "  part 1: " << *evaluate_variable(variable_defs, "root") << "\n";
-    std::cout << "  part 2: " << do_part_2(variable_defs) << "\n";
+    std::cout << "  part 1: " << evaluate_variable(variable_defs, "root") << "\n";
+    std::cout << "  part 2: " << solve_for_unknown(variable_defs, "humn") << "\n";
 }
