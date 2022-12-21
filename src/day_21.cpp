@@ -21,11 +21,11 @@ namespace {
         std::string rhs;
     };
     using expression = std::variant<int64_t, binary_expression>;
-
     struct variable_def {
         std::string var;
         expression expr;
     };
+    using var_def_tbl = std::unordered_map<std::string, expression>;
 
     variable_def str_to_variable_def(const std::string& line) {
         auto [var, def] = aoc::split_to_tuple<2>(line, ':');
@@ -37,11 +37,8 @@ namespace {
         return { var, {binary_expression{op[0], lhs, rhs}} };
     }
 
-    using binary_op = std::function<int64_t(int64_t, int64_t)>;
-    using var_def_tbl = std::unordered_map<std::string, expression>;
-
     std::optional<int64_t> maybe_evaluate_variable(const var_def_tbl& defs, const std::string& var){
-        const static std::unordered_map<char, binary_op> op_tbl = {
+        const static std::unordered_map<char, std::function<int64_t(int64_t, int64_t)>> op_tbl = {
             {'+', [](int64_t lhs, int64_t rhs)->int64_t { return lhs + rhs; }},
             {'-', [](int64_t lhs, int64_t rhs)->int64_t { return lhs - rhs; }},
             {'*', [](int64_t lhs, int64_t rhs)->int64_t { return lhs * rhs; }},
