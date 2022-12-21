@@ -30,7 +30,7 @@ namespace {
             []() {aoc::day_18( "Boiling Boulders" ); },
             []() {aoc::day_19( "Not Enough Minerals" ); },
             []() {aoc::day_20( "Grove Positioning System" ); },
-            []() {aoc::day_21( "TODO" ); },
+            []() {aoc::day_21( "Monkey Math" ); },
             []() {aoc::day_22( "TODO" ); },
             []() {aoc::day_23( "TODO" ); },
             []() {aoc::day_24( "TODO" ); },

@@ -16,4 +16,20 @@ namespace aoc {
     std::string remove_nonalphabetic(const std::string& str);
     std::string remove_nonnumeric(const std::string& str);
     std::string trim(const std::string& str);
+
+    template <std::size_t... Is>
+    auto create_tuple_impl(std::index_sequence<Is...>, const std::vector<std::string>& arguments) {
+        return std::make_tuple(arguments[Is]...);
+    }
+
+    template <std::size_t N>
+    auto create_tuple(const std::vector<std::string>& arguments) {
+        return create_tuple_impl(std::make_index_sequence<N>{}, arguments);
+    }
+
+    template <std::size_t N>
+    auto split_to_tuple(const std::string& s, char delim) {
+        auto vec = split(s, delim);
+        return create_tuple<N>(vec);
+    }
 }
