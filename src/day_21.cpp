@@ -45,28 +45,11 @@ namespace {
         return { var, {binary_expression{op[0], lhs, rhs}} };
     }
 
-    std::string to_string(const binary_expression& expr) {
-        std::stringstream ss;
-        ss << expr.lhs << " " << expr.op << " " << expr.rhs;
-        return ss.str();
-    }
-
-    std::string to_string(const variable_def& def) {
-        std::string expr_str = std::visit(
-            overloaded{
-                [](int64_t num)->std::string { return std::to_string(num); },
-                [](const binary_expression& expr) { return to_string(expr); }
-            },
-            def.expr
-        );
-        return def.var + std::string(" : ") + expr_str;
-    }
-
     using eval_stack_item = std::variant<int64_t, char, std::string>;
     using binary_op = std::function < int64_t(int64_t, int64_t)>;
 
     using var_def_tbl = std::unordered_map<std::string, expression>;
-    std::optional<int64_t> evaluate_variable(const var_def_tbl& definitions, const std::string& var) {
+    std::optional<int64_t> evaluate_variable(const var_def_tbl& defs, const std::string& var){
         const static std::unordered_map<char, binary_op> op_tbl = {
             {'+', [](int64_t lhs, int64_t rhs)->int64_t { return lhs + rhs; }},
             {'-', [](int64_t lhs, int64_t rhs)->int64_t { return lhs - rhs; }},
@@ -99,10 +82,10 @@ namespace {
                         eval_stack.push(func(arg1,arg2));
                     },
                     [&](const std::string& var) {
-                        if (!definitions.contains(var)) {
+                        if (!defs.contains(var)) {
                             return eval_stack.push("<unknown-var>");
                         }
-                        auto val = definitions.at(var);
+                        auto val = defs.at(var);
                         if (std::holds_alternative<int64_t>(val)) {
                             eval_stack.push(std::get<int64_t>(val));
                         } else {
@@ -116,7 +99,6 @@ namespace {
                 item
             );
         }
-        
         return std::get<int64_t>(eval_stack.top());
     }
     struct binary_expr_def {
@@ -126,22 +108,16 @@ namespace {
 
     std::optional<binary_expr_def> find_unknown_expression(
             const var_def_tbl& definitions, const std::string& variable) {
-        std::optional<binary_expr_def> target = {};
         for (const auto& var_def : definitions ) {
             const auto [var, expr] = var_def;
             if (std::holds_alternative<binary_expression>(expr)) {
                 const auto& bin_expr = std::get<binary_expression>(expr);
                 if (bin_expr.lhs == variable || bin_expr.rhs == variable) {
-                    if (target.has_value()) {
-                        throw std::runtime_error(
-                            "this algorithm in not sophisticated enought to solve this input"
-                        );
-                    }
-                    target = { var, bin_expr };
+                    return { { var, bin_expr } };
                 }
             }
         }
-        return target;
+        return {};
     }
 
     variable_def root_expression_part2(const var_def_tbl& definitions) {
@@ -150,63 +126,32 @@ namespace {
         defs.erase("humn");
         auto lhs = evaluate_variable(defs, root_expr.lhs);
         auto rhs = evaluate_variable(defs, root_expr.rhs);
-
-        if (lhs) {
-            return { root_expr.rhs, *lhs };
-        } else {
-            return { root_expr.lhs, *rhs };
-        }
+        return (lhs) ? variable_def{ root_expr.rhs, *lhs } : variable_def{ root_expr.lhs, *rhs };
     }
 
-    std::vector<variable_def> solve_for_x(const binary_expr_def& def, std::string unknown, const var_def_tbl& defs) {
+    std::vector<variable_def> solve_for_x(const binary_expr_def& def, std::string unknown, 
+            const var_def_tbl& defs) {
         const auto& expr = def.expr;
-        if (expr.op == '-') {
-            if (expr.lhs == unknown) {
-                auto value = evaluate_variable(defs, expr.rhs);
-                return {
-                    variable_def{expr.rhs, *value},
-                    variable_def{unknown, binary_expression{ '+', def.var, expr.rhs} }
-                };
-            } else {
-                auto value = evaluate_variable(defs, expr.lhs);
-                return {
-                    variable_def{expr.lhs, *value},
-                    variable_def{unknown, binary_expression{'-', expr.lhs, def.var}}
-                };
-            }
-        } else if (expr.op == '/') {
-            if (expr.lhs == unknown) {
-                auto value = evaluate_variable(defs, expr.rhs);
-                return {
-                    variable_def{expr.rhs, *value},
-                    variable_def{unknown, binary_expression{ '*', def.var, expr.rhs} }
-                };
-            } else {
-                auto value = evaluate_variable(defs, expr.lhs);
-                return {
-                    variable_def{expr.lhs, *value},
-                    variable_def{unknown, binary_expression{'/', expr.lhs, def.var}}
-                };
-            }
-        } else if (expr.op == '+') {
-            auto num = (expr.lhs == unknown) ?
-                *evaluate_variable(defs, expr.rhs) :
-                *evaluate_variable(defs, expr.lhs);
-            auto set_var = (expr.lhs == unknown) ? expr.rhs : expr.lhs;
-            return {
-                variable_def{set_var, num},
-                variable_def{unknown, binary_expression{'-', def.var, set_var}}
-            };
-        } else if (expr.op == '*') {
-            auto num = (expr.lhs == unknown) ?
-                *evaluate_variable(defs, expr.rhs) :
-                *evaluate_variable(defs, expr.lhs);
-            auto set_var = (expr.lhs == unknown) ? expr.rhs : expr.lhs;
-            return {
-                variable_def{set_var, num},
-                variable_def{unknown, binary_expression{'/', def.var, set_var}}
-            };
-        }
+        bool unknown_on_left = (expr.lhs == unknown);
+        auto old_var = def.var;
+        auto arg_var = unknown_on_left ? expr.rhs : expr.lhs;
+        auto arg_value = *evaluate_variable(defs, arg_var);
+        std::string key = std::string(1, expr.op) + ((unknown_on_left) ? "L" : "R");
+        std::unordered_map<std::string, binary_expression> inverse_op = {
+            {"-L", binary_expression{ '+', old_var, arg_var} },
+            {"-R", binary_expression{ '-', arg_var, old_var} },
+            {"/L", binary_expression{ '*', old_var, arg_var} },
+            {"/R", binary_expression{ '/', arg_var, old_var} },
+            {"+L", binary_expression{ '-', old_var, arg_var} },
+            {"+R", binary_expression{ '-', old_var, arg_var} },
+            {"*L", binary_expression{ '/', old_var, arg_var} },
+            {"*R", binary_expression{ '/', old_var, arg_var} }
+        };
+        const auto [new_op, new_lhs, new_rhs] = inverse_op.at(key);
+        return {
+            variable_def{arg_var, arg_value},
+            variable_def{unknown, inverse_op.at(key) }
+        };
     }
 
     int64_t do_part_2(const var_def_tbl& defs) {
@@ -230,7 +175,7 @@ namespace {
                     continue;
                 }
                 throw std::runtime_error(
-                    "this algorithm in not sophisticated enought to solve this input"
+                    "this algorithm in not sophisticated enough to solve this input"
                 );
             }
             const auto [var, expr] = *unknown_expr;
