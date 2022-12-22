@@ -31,7 +31,7 @@ namespace {
             []() {aoc::day_19( "Not Enough Minerals" ); },
             []() {aoc::day_20( "Grove Positioning System" ); },
             []() {aoc::day_21( "Monkey Math" ); },
-            []() {aoc::day_22( "TODO" ); },
+            []() {aoc::day_22( "Monkey Map" ); },
             []() {aoc::day_23( "TODO" ); },
             []() {aoc::day_24( "TODO" ); },
             []() {aoc::day_25( "TODO" ); }
