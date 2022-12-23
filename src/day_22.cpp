@@ -4,6 +4,9 @@
 #include <iostream>
 #include <functional>
 #include <array>
+#include <boost/functional/hash.hpp>
+#include <unordered_set>
+#include <unordered_map>
 
 namespace r = ranges;
 namespace rv = ranges::views;
@@ -43,11 +46,25 @@ namespace {
         };
     }
 
+    struct point_hash {
+        size_t operator()(const point& pt) const {
+            size_t seed = 0;
+            boost::hash_combine(seed, pt.x);
+            boost::hash_combine(seed, pt.y);
+            return seed;
+        }
+    };
+
+    using point_set = std::unordered_set<point, point_hash>;
+
+    template<typename T>
+    using point_map = std::unordered_map<point, T, point_hash>;
+
     const std::array<point, 4> k_directions = { {
-        {1,0},
-        {0,1},
-        {-1,0},
-        {0,-1}
+        {1,0}, // >
+        {0,1}, // V
+        {-1,0},// <
+        {0,-1} // ^
     } };
 
     constexpr char k_empty = '.';
@@ -57,6 +74,30 @@ namespace {
     constexpr int k_down = 1;
     constexpr int k_left = 2;
     constexpr int k_up = 3;
+
+    struct state {
+        point loc;
+        int dir;
+
+        state turn_right() const {
+            int new_dir = dir;
+            ++new_dir;
+            new_dir = new_dir % 4;
+            return { loc, new_dir };
+        }
+
+        state turn_left() const {
+            int new_dir = dir;
+            --new_dir;
+            new_dir = (new_dir < 0) ? 3 : new_dir;
+            return { loc, new_dir };
+        }
+
+        state go_forward() const {
+            auto new_loc = loc + k_directions[dir];
+            return { new_loc,dir };
+        }
+    };
 
     class grid {
         std::vector<std::vector<char>> impl_;
@@ -123,11 +164,24 @@ namespace {
 
         }
 
+        void print() const {
+            for (auto&& row : impl_) {
+                for (char ch : row) {
+                    std::cout << ch;
+                }
+                std::cout << "\n";
+            }
+        }
+
         point starting_loc() const {
             return {
                 std::get<0>(horz_bounds_.front()),
                 0
             };
+        }
+
+        void set(const point& loc, char ch) {
+            impl_[loc.y][loc.x] = ch;
         }
 
         char tile(const point& loc) const {
@@ -141,7 +195,7 @@ namespace {
             return row[loc.x];
         }
 
-        point neighbor(const point& loc, int direction) const {
+        point wrapped_neighbor(const point& loc, int direction) const {
             auto neighbor_pt = loc + k_directions[direction];
             auto [left, right] = horz_bounds_[loc.y];
             if (neighbor_pt.x > right) {
@@ -158,6 +212,16 @@ namespace {
             return neighbor_pt;
         }
 
+        state neighbor(const state& state) const {
+            auto neighbor_pt = state.loc + k_directions[state.dir];
+            return { neighbor_pt, state.dir };
+        }
+
+        point left_neighbor(const state& s) const {
+            auto state = s.turn_left();
+            return neighbor(state).loc;
+        }
+
         int height() const {
             return static_cast<int>(impl_.size());
         }
@@ -166,17 +230,49 @@ namespace {
             return width_;
         }
 
-        void track(point pt) {
-            impl_[pt.y][pt.x] = '@';
+        bool visited_or_space(const point& pt, const point_set& visited) const {
+            return visited.contains(pt) || tile(pt) == k_outer_space;
         }
 
-        void print() const {
-            for (int y = 0; y < height(); ++y) {
-                for (int x = 0; x < width(); ++x) {
-                    std::cout << tile({ x,y });
-                }
-                std::cout << "\n";
+        int probe_forward(const state& s, const point_set& visited) const {
+            auto state = s;
+            int count = 0;
+            while (!visited_or_space(state.go_forward().loc, visited) && visited_or_space(left_neighbor(state), visited)){
+                count++;
+                state = state.go_forward();
             }
+            return count;
+        }
+
+        int probe_turn(const state& s, const point_set& visited) const {
+            if (!visited_or_space(left_neighbor(s), visited)) {
+                return -1;
+            }
+            return 1;
+        }
+
+        instructions spiral_traversal()  {
+            state s{ starting_loc(), k_right };
+            point_set visited;
+            int distance = 0;
+            instructions inst;
+            do {
+                distance = probe_forward(s, visited);
+                inst.push_back(instruction{ true, distance });
+                for (int i = 0; i < distance; ++i) {
+                    visited.insert(s.loc);
+                    //set(s.loc, '@');
+                    s = neighbor(s);
+                }
+                int turn = probe_turn(s, visited);
+                s = (turn == 1) ? s.turn_right() : s.turn_left();
+                inst.push_back({ false, turn });
+
+                //print();
+                //std::cout << "\n";
+
+            } while (distance > 0);
+            return inst;
         }
     };
 
@@ -199,41 +295,294 @@ namespace {
          return { std::move(grid), std::move(instructs) };
     }
 
-    struct state {
-        point loc;
-        int dir;
-    };
-
-    state follow_instruction( grid& grid, const instruction& inst, const state& state) {
-        ::state s = state;
-        if (inst.go_forward) {
-            auto tile = k_empty;
-            int amt = inst.amount;
-            while (grid.tile(grid.neighbor(s.loc, s.dir)) != k_wall && --amt >= 0) {
-                s.loc = grid.neighbor(s.loc, s.dir);
-            }
-        } else {
-            s.dir += inst.amount;
-            if (s.dir < 0) {
-                s.dir = 3;
-            } else if (s.dir >= 4) {
-                s.dir = 0;
+    state follow_instructions( grid& grid, const instructions& insts) {
+        state s{ grid.starting_loc(), 0 };
+        for (const auto& inst : insts) {
+            if (inst.go_forward) {
+                auto tile = k_empty;
+                int amt = inst.amount;
+                while (grid.tile(grid.wrapped_neighbor(s.loc, s.dir)) != k_wall && --amt >= 0) {
+                    s.loc = grid.wrapped_neighbor(s.loc, s.dir);
+                }
+            } else {
+                if (inst.amount > 0) {
+                    s = s.turn_right();
+                } else {
+                    s = s.turn_left();
+                }
             }
         }
         return s;
     }
 
-    state follow_instructions( grid& grid, const instructions& insts) {
-        state state{ grid.starting_loc(), 0 };
-        grid.track(state.loc);
-        for (const auto& inst : insts) {
-            state = follow_instruction(grid, inst, state);
-        }
-        return state;
-    }
-
     int do_part_1(grid& grid, const instructions& insts) {
         auto end_state = follow_instructions(grid, insts);
+        end_state.loc = end_state.loc + point{ 1,1 };
+
+        return 1000 * end_state.loc.y + 4 * end_state.loc.x + end_state.dir;
+    }
+
+    int zero(point pt, int dim) {
+        return 0;
+    }
+
+    int get_x(point pt, int dim) {
+        return pt.x;
+    }
+
+    int get_max(point pt, int dim) {
+        return dim - 1;
+    }
+
+    int get_y(point pt, int dim) {
+        return pt.y;
+    }
+
+    int inv_x(point pt, int dim) {
+        return dim - pt.x - 1;
+    }
+
+    int inv_y(point pt, int dim) {
+        return dim - pt.y - 1;
+    }
+
+    using trans_coord_fn = std::function<int(point, int)>;
+
+    struct transition {
+        int face;
+        int new_dir;
+        trans_coord_fn x_fn;
+        trans_coord_fn y_fn;
+    };
+
+    constexpr int k_top = 0;
+    constexpr int k_north = 1;
+    constexpr int k_east = 2;
+    constexpr int k_south = 3;
+    constexpr int k_west = 4;
+    constexpr int k_bottom = 5;
+
+    struct cube_point {
+        int face;
+        point loc;
+
+        bool operator==(const cube_point& pt) const {
+            return face == pt.face && loc == pt.loc;
+        }
+    };
+
+    struct cube_point_hash {
+        size_t operator()(const cube_point& cpt) const {
+            size_t seed = 0;
+            boost::hash_combine(seed, cpt.face);
+            boost::hash_combine(seed, cpt.loc.x);
+            boost::hash_combine(seed, cpt.loc.y);
+            return seed;
+        }
+    };
+
+    template<typename T>
+    using cube_loc_map = std::unordered_map<cube_point, T, cube_point_hash>;
+
+    struct cube_state {
+        cube_point loc;
+        int dir;
+
+        cube_state turn_right() const {
+            int new_dir = dir;
+            ++new_dir;
+            new_dir = new_dir % 4;
+            return { loc, new_dir };
+        }
+
+        cube_state turn_left() const {
+            int new_dir = dir;
+            --new_dir;
+            new_dir = (new_dir < 0) ? 3 : new_dir;
+            return { loc, new_dir };
+        }
+
+    };
+
+    char debug(int n) {
+        static std::vector<char> chars;
+        if (chars.empty()) {
+            chars.resize(62);
+            auto iter = chars.begin();
+            for (int i = 0; i < 10; ++i) {
+                *iter++ = i + '0';
+            }
+            for (int i = 0; i < 26; ++i) {
+                *iter++ = i + 'a';
+            }
+            for (int i = 0; i < 26; ++i) {
+                *iter++ = i + 'A';
+            }
+        }
+        return chars[n % 62];
+    }
+
+    class cube_grid {
+        std::array<std::vector<std::vector<char>>, 6> faces_;
+        std::array<std::array<transition, 4>, 6> face_map_;
+        std::array<point, 6> unfolded_;
+        int dim_;
+        cube_loc_map<point> cube_pt_to_flat_pt_;
+        point_map<int> cube_dir_to_flat_dir_;
+
+        void populate_cube_dir_to_flat_dir(const cube_state& cs, const state& s) {
+            if (cube_dir_to_flat_dir_.contains({ cs.loc.face,cs.dir })) {
+                return;
+            }
+            int cs_dir = cs.dir;
+            int s_dir = s.dir;
+            for (int i = 0; i < 4; ++i) {
+                cube_dir_to_flat_dir_[{cs.loc.face, cs_dir}] = s_dir;
+                cs_dir = (cs_dir + 1) % 4;
+                s_dir = (s_dir + 1) % 4;
+            }
+        }
+
+        void copy_grid( ::grid& grid) {
+            auto spiral = grid.spiral_traversal();
+            state flat_state{ {grid.starting_loc()}, k_right };
+            cube_state cub_state{ starting_loc(), k_right };
+            
+            for (const auto& inst : spiral) {
+                if (inst.go_forward) {
+                    for (int i = 0; i < inst.amount; ++i) {
+                        populate_cube_dir_to_flat_dir(cub_state, flat_state);
+                        set(cub_state.loc, grid.tile(flat_state.loc));
+                        cube_pt_to_flat_pt_[cub_state.loc] = flat_state.loc;
+                        flat_state = flat_state.go_forward();
+                        cub_state = neighbor(cub_state);
+                    }
+                } else {
+                    if (inst.amount > 0) {
+                        flat_state = flat_state.turn_right();
+                        cub_state = cub_state.turn_right();
+                    } else {
+                        flat_state = flat_state.turn_left();
+                        cub_state = cub_state.turn_left();
+                    }
+                }
+            }
+            set(cub_state.loc, grid.tile(flat_state.loc));
+            cube_pt_to_flat_pt_[cub_state.loc] = flat_state.loc;
+        }
+
+    public:
+        cube_grid( grid& g, int face_dim) : dim_(face_dim) {
+            for (auto& face : faces_) {
+                face = std::vector<std::vector<char>>(
+                    face_dim,
+                    std::vector<char>(face_dim, k_empty)
+                );
+            }
+            face_map_ = std::array<std::array<transition, 4>, 6>{ {
+                {{ {k_east, k_right, zero, get_y}, {k_south, k_down, get_x, zero}, {k_west, k_left, get_max, get_y}, {k_north, k_up, get_x, get_max} }}, //top
+                {{ {k_east, k_down, inv_y, zero},{k_top, k_down, get_x, zero},{k_west, k_down, get_y, zero},{k_bottom, k_up, get_x, get_max} }}, //north
+                {{ {k_bottom, k_left, get_max, inv_y},{k_south,k_left, get_max, get_x},{k_top, k_left, get_max, get_y},{k_north, k_left, get_max, inv_x} }}, //east
+                {{ {k_east,k_up,get_y,get_max},{k_bottom,k_down,get_x,zero},{k_west,k_up,inv_y,get_max},{k_top,k_up,get_x,get_max} }}, //south
+                {{ {k_top,k_right,zero,get_y},{k_south,k_right,zero,inv_x},{k_bottom,k_right,zero,inv_y},{k_north,k_right,zero,get_x} }}, //west
+                {{ {k_east, k_left, get_max, inv_y},{k_north,k_down,get_x,zero},{k_west,k_right,zero,inv_y},{k_south,k_up,get_x,get_max} }}, //bottom
+                }};
+            unfolded_ = std::array<point, 6>{{
+                {1, 1}, { 1,0 }, { 2,1 }, { 1,2 }, { 0,1 },{1,3}
+            }};
+            copy_grid(g);
+        }
+
+        point to_flat_point(const cube_point& cp) const {
+            return cube_pt_to_flat_pt_.at(cp);
+        }
+
+        state to_flat_state(const cube_state& cs) const {
+            auto pt = cube_pt_to_flat_pt_.at(cs.loc);
+            auto dir = cube_dir_to_flat_dir_.at({cs.loc.face, cs.dir});
+            return { pt,dir };
+        }
+
+        cube_point starting_loc() const {
+            return { k_top, {0,0} };
+        }
+
+        cube_state neighbor(const cube_state& s) const {
+            auto pt = s.loc.loc;
+            auto face = s.loc.face;
+            auto new_pt = pt + k_directions[s.dir];
+            const transition* trans = nullptr;
+            if (new_pt.x < 0) {
+                trans = &face_map_[face][k_left];
+            } else if (new_pt.x == dim_) {
+                trans = &face_map_[face][k_right];
+            } else if (new_pt.y < 0) {
+                trans = &face_map_[face][k_up];
+            } else if (new_pt.y == dim_) {
+                trans = &face_map_[face][k_down];
+            }
+            if (!trans) {
+                return { {face, new_pt}, s.dir };
+            }
+            return { 
+                cube_point{
+                    trans->face,
+                    point{ trans->x_fn(pt, dim_), trans->y_fn(pt,dim_) }
+                },
+                trans->new_dir
+            };
+        }
+
+        char tile(const cube_point& pt) const {
+            return faces_[pt.face][pt.loc.y][pt.loc.x];
+        }
+
+        void set(const cube_point& pt, char ch) {
+            faces_[pt.face][pt.loc.y][pt.loc.x] = ch;
+        }
+
+        void print() const {
+            std::vector<std::vector<char>> g(dim_ * 4, std::vector<char>(dim_ * 3, ' '));
+            for (int face = 0; face < 6; ++face) {
+                point orig = { unfolded_[face].x * dim_, unfolded_[face].y * dim_ };
+                for (int y = 0; y < dim_; ++y) {
+                    for (int x = 0; x < dim_; ++x) {
+                        g[y + orig.y][x + orig.x] = faces_[face][y][x];
+                    }
+                }
+            }
+            for (auto&& row : g) {
+                for (char t : row) {
+                    std::cout << t;
+                }
+                std::cout << "\n";
+            }
+        }
+    };
+
+    cube_state follow_instructions(cube_grid& grid, const instructions& insts) {
+        cube_state s{ grid.starting_loc(), 0 };
+        for (const auto& inst : insts) {
+            if (inst.go_forward) {
+                auto tile = k_empty;
+                int amt = inst.amount;
+                while (grid.tile(grid.neighbor(s).loc) != k_wall && --amt >= 0) {
+                    s = grid.neighbor(s);
+                }
+            } else {
+                if (inst.amount > 0) {
+                    s = s.turn_right();
+                } else {
+                    s = s.turn_left();
+                }
+            }
+        }
+        return s;
+    }
+
+    int do_part_2(cube_grid& grid, const instructions& insts) {
+        auto end_cube_state = follow_instructions(grid, insts);
+        auto end_state = grid.to_flat_state(end_cube_state);
         end_state.loc = end_state.loc + point{ 1,1 };
 
         return 1000 * end_state.loc.y + 4 * end_state.loc.x + end_state.dir;
@@ -246,5 +595,6 @@ void aoc::day_22(const std::string& title) {
 
     std::cout << header(22, title);
     std::cout << "  part 1: " << do_part_1(grid, instructions) << "\n";
-    std::cout << "  part 2: " << 0 << "\n";
+    cube_grid c_grid(grid, 50);
+    std::cout << "  part 2: " << do_part_2(c_grid, instructions) << "\n";
 }
