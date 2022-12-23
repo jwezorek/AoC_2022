@@ -32,7 +32,7 @@ namespace {
             []() {aoc::day_20( "Grove Positioning System" ); },
             []() {aoc::day_21( "Monkey Math" ); },
             []() {aoc::day_22( "Monkey Map" ); },
-            []() {aoc::day_23( "TODO" ); },
+            []() {aoc::day_23( "Unstable Diffusion" ); },
             []() {aoc::day_24( "TODO" ); },
             []() {aoc::day_25( "TODO" ); }
         };
