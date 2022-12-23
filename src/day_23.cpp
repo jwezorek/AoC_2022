@@ -151,7 +151,7 @@ namespace {
         );
     }
 
-    point_set do_one_round(const point_set& elves, int start_index) {
+    point_set do_one_round(const point_set& elves, int start_index, bool* elf_moved = nullptr) {
         point_set output;
         std::vector<proposal> proposals;
         for (const point& pt : elves) {
@@ -181,6 +181,9 @@ namespace {
         for (const auto& prop : proposals) {
             if (new_loc_counts.at(prop.proposed_loc) == 1) {
                 output.insert(prop.proposed_loc);
+                if (elf_moved) {
+                    *elf_moved = true;
+                }
             } else {
                 output.insert(prop.old_loc);
             }
@@ -226,6 +229,20 @@ namespace {
         return set;
     }
 
+    int run_until_no_elf_moves(const point_set& pts) {
+        auto set = pts;
+        int start_dir_index = 0;
+        int round = 0;
+        bool elf_moved = true;
+        while (elf_moved) {
+            round++;
+            elf_moved = false;
+            set = do_one_round(set, start_dir_index, &elf_moved);
+            start_dir_index = (start_dir_index + 1) % 4;
+        }
+        return round;
+    }
+
     int count_empty(const point_set& pts) {
         auto [x1, y1, x2, y2] = bounds(pts);
         int wd = x2 - x1;
@@ -249,5 +266,5 @@ void aoc::day_23(const std::string& title) {
 
     std::cout << header(23, title);
     std::cout << "  part 1: " << count_empty(run_n_rounds(set,10)) << "\n";
-    std::cout << "  part 2: " << 0 << "\n";
+    std::cout << "  part 2: " << run_until_no_elf_moves(set) << "\n";
 }
