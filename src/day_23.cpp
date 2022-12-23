@@ -109,7 +109,6 @@ namespace {
         return false;
     }
 
-
     auto locs_to_check(const point& pt, direction dir) {
         const static std::unordered_map<direction, std::array<direction, 3>> tbl = {
             { N, {{NW,N,NE}} },
@@ -262,7 +261,6 @@ namespace {
 void aoc::day_23(const std::string& title) {
     auto input = file_to_string_vector(input_path(23, 1));
     auto set = input_to_elf_locations(input);
-
 
     std::cout << header(23, title);
     std::cout << "  part 1: " << count_empty(run_n_rounds(set,10)) << "\n";

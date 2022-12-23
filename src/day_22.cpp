@@ -164,6 +164,18 @@ namespace {
 
         }
 
+        int min_cross_section() const {
+            return r::min(
+                rv::concat(horz_bounds_, vert_bounds_) |
+                    rv::transform(
+                        [](auto&& tup)->int {
+                            auto [u, v] = tup;
+                            return v - u + 1;
+                        }
+                    )
+            );
+        }
+
         void print() const {
             for (auto&& row : impl_) {
                 for (char ch : row) {
@@ -261,15 +273,11 @@ namespace {
                 inst.push_back(instruction{ true, distance });
                 for (int i = 0; i < distance; ++i) {
                     visited.insert(s.loc);
-                    //set(s.loc, '@');
                     s = neighbor(s);
                 }
                 int turn = probe_turn(s, visited);
                 s = (turn == 1) ? s.turn_right() : s.turn_left();
                 inst.push_back({ false, turn });
-
-                //print();
-                //std::cout << "\n";
 
             } while (distance > 0);
             return inst;
@@ -472,11 +480,11 @@ namespace {
         }
 
     public:
-        cube_grid( grid& g, int face_dim) : dim_(face_dim) {
+        cube_grid( grid& g) : dim_(g.min_cross_section()) {
             for (auto& face : faces_) {
                 face = std::vector<std::vector<char>>(
-                    face_dim,
-                    std::vector<char>(face_dim, k_empty)
+                    dim_,
+                    std::vector<char>(dim_, k_empty)
                 );
             }
             face_map_ = std::array<std::array<transition, 4>, 6>{ {
@@ -595,6 +603,6 @@ void aoc::day_22(const std::string& title) {
 
     std::cout << header(22, title);
     std::cout << "  part 1: " << do_part_1(grid, instructions) << "\n";
-    cube_grid c_grid(grid, 50);
+    cube_grid c_grid(grid);
     std::cout << "  part 2: " << do_part_2(c_grid, instructions) << "\n";
 }
