@@ -30,17 +30,6 @@ namespace {
         return  { lhs.x + rhs.x, lhs.y + rhs.y };
     }
 
-    point operator-(const point& lhs, const point& rhs) {
-        return  { lhs.x - rhs.x, lhs.y - rhs.y };
-    }
-
-    point operator*(int lhs, const point& rhs) {
-        return {
-            lhs * rhs.x,
-            lhs * rhs.y
-        };
-    }
-
     struct point_hash {
         size_t operator()(const point& pt) const {
             size_t seed = 0;
@@ -49,9 +38,6 @@ namespace {
             return seed;
         }
     };
-
-    template<typename T>
-    using point_map = std::unordered_map<point, T, point_hash>;
 
     using point_set = std::unordered_set<point, point_hash>;
 
