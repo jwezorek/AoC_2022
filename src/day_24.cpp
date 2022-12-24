@@ -75,16 +75,6 @@ namespace {
             std::optional<direction>{};
     }
 
-    char direction_to_char(direction dir) {
-        const static std::unordered_map<direction, char> tbl{
-            { direction::north ,'^'},
-            { direction::east  ,'>'},
-            { direction::south ,'v'},
-            { direction::west  ,'<'}
-        };
-        return tbl.at(dir);
-    }
-
     point direction_to_offset(direction dir) {
         const static std::unordered_map<direction, point> tbl{
             { direction::north , {0,-1}},
@@ -175,22 +165,6 @@ namespace {
             return n;
         }
 
-        char point_to_char(const point& pt) const {
-            auto n = count(pt);
-            if (n == 0) {
-                return '.';
-            }
-            if (n > 1) {
-                return '0' + n;
-            }
-            for (const auto& [i,ps] : rv::enumerate(impl_)) {
-                if (ps.contains(pt)) {
-                    return direction_to_char(static_cast<direction>(i));
-                }
-            }
-            return ' ';
-        }
-
         int width() const {
             return wd_;
         }
@@ -237,26 +211,6 @@ namespace {
             }
         }
         return blizz_set;
-    }
-
-    void print(const blizzard_set& valley, std::optional<point> elf = {}) {
-        for (int y = 0; y < valley.height(); ++y) {
-            for (int x = 0; x < valley.width(); ++x) {
-                point pt{ x,y };
-                if (elf) {
-                    if (*elf == pt) {
-                        std::cout << 'E';
-                        continue;
-                    }
-                }
-                if (is_wall(pt, valley.width(), valley.height())) {
-                    std::cout << '#';
-                    continue;
-                }
-                std::cout << valley.point_to_char(pt);
-            }
-            std::cout << "\n";
-        }
     }
 
     using blizzard_atlas = std::vector<blizzard_set>;
@@ -337,7 +291,9 @@ namespace {
             );
     }
 
-    int min_time_crossing(const blizzard_atlas& atlas, const point& from, const point& to, int start_time) {
+    int min_time_crossing(  const blizzard_atlas& atlas, const point& from, 
+                const point& to, int start_time) {
+        int atlas_sz = static_cast<int>(atlas.size());
         int wd = atlas.front().width();
         int hgt = atlas.front().height();
         std::queue<state> queue;
@@ -351,20 +307,25 @@ namespace {
                 return state.time;
             }
 
-            if (visited.contains(state.normalized(atlas.size()))){
+            if (visited.contains(state.normalized(atlas_sz))){
                 continue;
             }
-            visited.insert(state.normalized(atlas.size()));
+            visited.insert(state.normalized(atlas_sz));
+
             for (auto&& new_state : neighbors_at_place_and_time(state, atlas)) {
                 queue.push(new_state);
             }
         }
+        return -1;
     }
 
-    int min_time_crossing_back_and_forth(const blizzard_atlas& atlas, const point& from, const point& to, int start_time) {
+    int min_time_crossing_back_and_forth(
+            const blizzard_atlas& atlas, const point& from, const point& to, int start_time) {
+
         auto there = min_time_crossing(atlas, from, to, 0);
         auto back = min_time_crossing(atlas, to, from, there);
         auto there_again = min_time_crossing(atlas, from, to, back);
+
         return there_again;
     }
 }
@@ -377,6 +338,8 @@ void aoc::day_24(const std::string& title) {
     int hgt = atlas.front().height();
 
     std::cout << header(24, title);
-    std::cout << "  part 1: " << min_time_crossing(atlas, entrance_loc(), exit_loc(wd,hgt), 0) << "\n";
-    std::cout << "  part 2: " << min_time_crossing_back_and_forth(atlas, entrance_loc(), exit_loc(wd, hgt), 0) << "\n";
+    std::cout << "  part 1: " << 
+        min_time_crossing(atlas, entrance_loc(), exit_loc(wd,hgt), 0) << "\n";
+    std::cout << "  part 2: " << 
+        min_time_crossing_back_and_forth(atlas, entrance_loc(), exit_loc(wd, hgt), 0) << "\n";
 }
