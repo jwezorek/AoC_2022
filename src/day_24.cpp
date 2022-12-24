@@ -159,16 +159,6 @@ namespace {
             return hgt_;
         }
 
-        auto blizzards(const point& pt) const {
-            return rv::iota(0, 4) | rv::transform(
-                [pt, this](int i)->direction {
-                    return impl_[i].contains(pt) ? static_cast<direction>(i) : direction::none;
-                }
-            ) | rv::remove_if(
-                [](direction dir) {return dir == direction::none; }
-                );
-        }
-
         blizzard_set next() const {
             blizzard_set next_set(wd_, hgt_);
             for (int i = 0; i < 4; ++i) {
