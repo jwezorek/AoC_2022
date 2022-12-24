@@ -33,7 +33,7 @@ namespace {
             []() {aoc::day_21( "Monkey Math" ); },
             []() {aoc::day_22( "Monkey Map" ); },
             []() {aoc::day_23( "Unstable Diffusion" ); },
-            []() {aoc::day_24( "TODO" ); },
+            []() {aoc::day_24( "Blizzard Basin" ); },
             []() {aoc::day_25( "TODO" ); }
         };
         auto index = day - 1;
