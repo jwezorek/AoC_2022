@@ -34,7 +34,7 @@ namespace {
             []() {aoc::day_22( "Monkey Map" ); },
             []() {aoc::day_23( "Unstable Diffusion" ); },
             []() {aoc::day_24( "Blizzard Basin" ); },
-            []() {aoc::day_25( "TODO" ); }
+            []() {aoc::day_25( "Full of Hot Air" ); }
         };
         auto index = day - 1;
         if (index < 0) {
